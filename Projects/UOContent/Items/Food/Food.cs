@@ -1,11 +1,22 @@
+using System;
 using ModernUO.Serialization;
 using Server.Collections;
 using Server.ContextMenus;
+using Server.Engines.Craft;
+using Server.Engines.FoodBuffs;
 
 namespace Server.Items;
 
-[SerializationGenerator(0, false)]
-public abstract partial class Food : Item
+// Regular is first so food that predates quality tiers deserializes as Regular.
+public enum FoodQuality
+{
+    Regular,
+    Low,
+    Exceptional
+}
+
+[SerializationGenerator(1, false)]
+public abstract partial class Food : Item, ICraftable
 {
     [SerializableField(0)]
     [SerializedCommandProperty(AccessLevel.GameMaster)]
@@ -18,6 +29,10 @@ public abstract partial class Food : Item
     [SerializableField(2)]
     [SerializedCommandProperty(AccessLevel.GameMaster)]
     private int _fillFactor;
+
+    [SerializableField(3)]
+    [SerializedCommandProperty(AccessLevel.GameMaster)]
+    private FoodQuality _quality;
 
     public Food(int itemID, int amount = 1) : base(itemID)
     {
@@ -49,9 +64,67 @@ public abstract partial class Food : Item
         }
     }
 
+    /// <summary>
+    /// Crafted food only: vendor and loot food never buffs, which keeps Cooking worth training.
+    /// </summary>
+    public FoodBuffProfile BuffProfile => PlayerConstructed ? FoodBuffTable.Get(GetType()) : null;
+
     public override bool CanStackWith(Item dropped) =>
-        (dropped is not Food food || Poison == food.Poison && Poisoner == food.Poisoner) &&
+        (dropped is not Food food || Poison == food.Poison && Poisoner == food.Poisoner &&
+            Quality == food.Quality && PlayerConstructed == food.PlayerConstructed) &&
         base.CanStackWith(dropped);
+
+    private void MigrateFrom(V0Content content)
+    {
+        _poisoner = content.Poisoner;
+        _poison = content.Poison;
+        _fillFactor = content.FillFactor;
+    }
+
+    public virtual int OnCraft(
+        int quality, bool makersMark, Mobile from, CraftSystem craftSystem, Type typeRes, BaseTool tool,
+        CraftItem craftItem, int resHue
+    )
+    {
+        Quality = quality switch
+        {
+            0 => FoodQuality.Low,
+            2 => FoodQuality.Exceptional,
+            _ => FoodQuality.Regular
+        };
+
+        if (Hue == 0)
+        {
+            Hue = resHue;
+        }
+
+        return quality;
+    }
+
+    public override void AddNameProperty(IPropertyList list)
+    {
+        base.AddNameProperty(list);
+
+        if (PlayerConstructed && Quality == FoodQuality.Exceptional)
+        {
+            list.Add(1060636); // exceptional
+        }
+    }
+
+    public override void GetProperties(IPropertyList list)
+    {
+        base.GetProperties(list);
+
+        var profile = BuffProfile;
+
+        if (profile != null)
+        {
+            list.Add(
+                1060658, // ~1_val~: ~2_val~
+                $"{(profile.Slot == FoodBuffSlot.Meal ? "Well Fed" : "Refreshed")}	{profile.GetDescription(Quality)}"
+            );
+        }
+    }
 
 
     public virtual bool Eat(Mobile from)
@@ -70,6 +143,13 @@ public abstract partial class Food : Item
             if (Poison != null)
             {
                 from.ApplyPoison(Poisoner, Poison);
+            }
+
+            var profile = BuffProfile;
+
+            if (profile != null)
+            {
+                FoodBuffSystem.Apply(from, profile, Quality);
             }
 
             Consume();
