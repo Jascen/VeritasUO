@@ -1,0 +1,235 @@
+{
+  "version": 0,
+  "type": "Server.Engines.Avatar.PlayerContext",
+  "properties": [
+    {
+      "name": "PointsFarmed",
+      "type": "int",
+      "rule": "PrimitiveTypeMigrationRule",
+      "ruleArguments": [
+        ""
+      ]
+    },
+    {
+      "name": "PointsSaved",
+      "type": "int",
+      "rule": "PrimitiveTypeMigrationRule",
+      "ruleArguments": [
+        ""
+      ]
+    },
+    {
+      "name": "SkillCapLevel",
+      "type": "int",
+      "rule": "PrimitiveTypeMigrationRule",
+      "ruleArguments": [
+        ""
+      ]
+    },
+    {
+      "name": "StatCapLevel",
+      "type": "int",
+      "rule": "PrimitiveTypeMigrationRule",
+      "ruleArguments": [
+        ""
+      ]
+    },
+    {
+      "name": "SkillGainRateLevel",
+      "type": "int",
+      "rule": "PrimitiveTypeMigrationRule",
+      "ruleArguments": [
+        ""
+      ]
+    },
+    {
+      "name": "PointGainRateLevel",
+      "type": "int",
+      "rule": "PrimitiveTypeMigrationRule",
+      "ruleArguments": [
+        ""
+      ]
+    },
+    {
+      "name": "ImprovedTemplateCount",
+      "type": "int",
+      "rule": "PrimitiveTypeMigrationRule",
+      "ruleArguments": [
+        ""
+      ]
+    },
+    {
+      "name": "UnlockPrimarySkillBoost",
+      "type": "bool",
+      "rule": "PrimitiveTypeMigrationRule",
+      "ruleArguments": [
+        ""
+      ]
+    },
+    {
+      "name": "UnlockSecondarySkillBoost",
+      "type": "bool",
+      "rule": "PrimitiveTypeMigrationRule",
+      "ruleArguments": [
+        ""
+      ]
+    },
+    {
+      "name": "UnlockRecordSkillCaps",
+      "type": "bool",
+      "rule": "PrimitiveTypeMigrationRule",
+      "ruleArguments": [
+        ""
+      ]
+    },
+    {
+      "name": "Skills",
+      "type": "Server.Engines.Avatar.SkillArchive",
+      "rule": "RawSerializableMigrationRule",
+      "ruleArguments": [
+        "DeserializationRequiresParent"
+      ]
+    },
+    {
+      "name": "RecordedSkillCapLevel",
+      "type": "int",
+      "rule": "PrimitiveTypeMigrationRule",
+      "ruleArguments": [
+        ""
+      ]
+    },
+    {
+      "name": "UnlockRecordRecipes",
+      "type": "bool",
+      "rule": "PrimitiveTypeMigrationRule",
+      "ruleArguments": [
+        ""
+      ]
+    },
+    {
+      "name": "RivalSlayerName",
+      "type": "Server.Items.SlayerName",
+      "rule": "EnumMigrationRule"
+    },
+    {
+      "name": "RivalBonusEnabled",
+      "type": "bool",
+      "rule": "PrimitiveTypeMigrationRule",
+      "ruleArguments": [
+        ""
+      ]
+    },
+    {
+      "name": "RivalBonusPoints",
+      "type": "int",
+      "rule": "PrimitiveTypeMigrationRule",
+      "ruleArguments": [
+        ""
+      ]
+    },
+    {
+      "name": "SelectedTemplate",
+      "type": "Server.Engines.Avatar.AvatarStarterTemplates",
+      "rule": "EnumMigrationRule"
+    },
+    {
+      "name": "LifetimePointsGained",
+      "type": "int",
+      "rule": "PrimitiveTypeMigrationRule",
+      "ruleArguments": [
+        ""
+      ]
+    },
+    {
+      "name": "LifetimeDeaths",
+      "type": "int",
+      "rule": "PrimitiveTypeMigrationRule",
+      "ruleArguments": [
+        ""
+      ]
+    },
+    {
+      "name": "LifetimeEnemyFactionKills",
+      "type": "int",
+      "rule": "PrimitiveTypeMigrationRule",
+      "ruleArguments": [
+        ""
+      ]
+    },
+    {
+      "name": "LifetimeGameTime",
+      "type": "System.TimeSpan",
+      "rule": "PrimitiveTypeMigrationRule"
+    },
+    {
+      "name": "LifetimeCreatureKills",
+      "type": "int",
+      "rule": "PrimitiveTypeMigrationRule",
+      "ruleArguments": [
+        ""
+      ]
+    },
+    {
+      "name": "SafetyDepositBox",
+      "type": "Server.Engines.Avatar.SafetyDepositBox",
+      "rule": "SerializableInterfaceMigrationRule"
+    },
+    {
+      "name": "SafetyDepositBoxLevel",
+      "type": "int",
+      "rule": "PrimitiveTypeMigrationRule",
+      "ruleArguments": [
+        ""
+      ]
+    },
+    {
+      "name": "UnlockFullSkillArchive",
+      "type": "bool",
+      "rule": "PrimitiveTypeMigrationRule",
+      "ruleArguments": [
+        ""
+      ]
+    },
+    {
+      "name": "DraftModeEnabled",
+      "type": "bool",
+      "rule": "PrimitiveTypeMigrationRule",
+      "ruleArguments": [
+        ""
+      ]
+    },
+    {
+      "name": "DraftedSkillSet",
+      "type": "System.Collections.Generic.HashSet\u003CServer.SkillName\u003E",
+      "usesSaveFlag": true,
+      "rule": "HashSetMigrationRule",
+      "ruleArguments": [
+        "Server.SkillName",
+        "EnumMigrationRule"
+      ]
+    },
+    {
+      "name": "DraftBannedSkillSet",
+      "type": "System.Collections.Generic.HashSet\u003CServer.SkillName\u003E",
+      "usesSaveFlag": true,
+      "rule": "HashSetMigrationRule",
+      "ruleArguments": [
+        "Server.SkillName",
+        "EnumMigrationRule"
+      ]
+    },
+    {
+      "name": "PrestigeLevel",
+      "type": "int",
+      "rule": "PrimitiveTypeMigrationRule",
+      "ruleArguments": [
+        ""
+      ]
+    },
+    {
+      "name": "RunStartGameTime",
+      "type": "System.TimeSpan",
+      "rule": "PrimitiveTypeMigrationRule"
+    }
+  ]
+}
