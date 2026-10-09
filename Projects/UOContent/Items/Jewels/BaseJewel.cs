@@ -1,5 +1,6 @@
 using System;
 using ModernUO.Serialization;
+using Server.Engines.Affixes;
 using Server.Engines.Craft;
 
 namespace Server.Items;
@@ -18,8 +19,8 @@ public enum GemType
     Diamond
 }
 
-[SerializationGenerator(5, false)]
-public abstract partial class BaseJewel : Item, ICraftable, IAosItem
+[SerializationGenerator(6, false)]
+public abstract partial class BaseJewel : Item, ICraftable, IAosItem, ILootAffixItem
 {
     [EncodedInt]
     [InvalidateProperties]
@@ -51,6 +52,15 @@ public abstract partial class BaseJewel : Item, ICraftable, IAosItem
     [SerializableField(7)]
     [SerializedCommandProperty(AccessLevel.GameMaster)]
     private int _gemCount;
+
+    [InvalidateProperties]
+    [SerializedIgnoreDupe]
+    [SerializableField(8)]
+    [SaveFlag(nameof(ShouldSerializeLootAffixes))]
+    [SerializedCommandProperty(AccessLevel.GameMaster, canModify: true)]
+    private LootAffixes _lootAffixes;
+
+    private bool ShouldSerializeLootAffixes() => _lootAffixes?.IsEmpty == false;
 
     public BaseJewel(int itemID, Layer layer) : base(itemID)
     {
@@ -420,6 +430,26 @@ public abstract partial class BaseJewel : Item, ICraftable, IAosItem
         _resistances = content.Resistances;
         _skillBonuses = content.SkillBonuses;
         // _gemCount defaults to 0
+    }
+
+    private void MigrateFrom(V5Content content)
+    {
+        _maxHitPoints = content.MaxHitPoints;
+        _hitPoints = content.HitPoints;
+        _resource = content.Resource;
+        _gemType = content.GemType;
+        _attributes = content.Attributes;
+        _resistances = content.Resistances;
+        _skillBonuses = content.SkillBonuses;
+        _gemCount = content.GemCount;
+    }
+
+    public override void AddNameProperty(IPropertyList list)
+    {
+        if (_lootAffixes?.AddNameProperty(list, this, Name) != true)
+        {
+            base.AddNameProperty(list);
+        }
     }
 
     [AfterDeserialization]
