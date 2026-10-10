@@ -1604,6 +1604,12 @@ namespace Server.Mobiles
             IsStealthing = false; // IsStealthing should be moved to Server.Mobiles
         }
 
+        public override void OnRegionChange(Region old, Region @new)
+        {
+            base.OnRegionChange(old, @new);
+            RegionAnnouncer.Announce(this, old, @new);
+        }
+
         public override void OnHiddenChanged()
         {
             base.OnHiddenChanged();
