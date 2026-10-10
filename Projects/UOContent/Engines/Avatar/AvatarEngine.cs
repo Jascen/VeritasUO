@@ -42,7 +42,7 @@ public class AvatarEngine : GenericPersistence
     }
 
     /// <summary>
-    /// Replaces the backpack contents and worn items with a fresh starter kit. The bank, mount and Avatar book are kept.
+    /// Replaces the backpack contents and worn items with a fresh starter kit. The bank, mount, Avatar book and soul orb are kept.
     /// </summary>
     public static void RecreateBackpack(PlayerMobile player)
     {
@@ -63,7 +63,7 @@ public class AvatarEngine : GenericPersistence
         {
             foreach (var item in pack.Items)
             {
-                if (item is not AvatarBook)
+                if (item is not AvatarBook and not SoulOrb)
                 {
                     toDelete.Enqueue(item);
                 }
@@ -89,6 +89,11 @@ public class AvatarEngine : GenericPersistence
         if (player.Backpack.FindItemByType<AvatarBook>() == null)
         {
             player.Backpack.AddItem(new AvatarBook());
+        }
+
+        if (SoulOrb.FindActive(player) == null)
+        {
+            SoulOrb.Create(player, SoulOrbType.PermadeathPlaceholder);
         }
     }
 
