@@ -8,7 +8,7 @@ namespace Server.Engines.Avatar;
 public partial class AvatarBook : Item
 {
     [Constructible]
-    public AvatarBook() : base(0x2147)
+    public AvatarBook() : base(0x423F)
     {
         Name = "The Avatar's Ascent";
         LootType = LootType.Blessed;

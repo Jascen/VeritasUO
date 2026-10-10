@@ -38,11 +38,12 @@ public partial class SoulOrb : Item
     private TimerExecutionToken _timerToken;
 
     [Constructible]
-    public SoulOrb() : base(0x2C84)
+    public SoulOrb() : base(0x573E)
     {
         LootType = LootType.Blessed;
         Movable = false;
         Weight = 1.0;
+		Hue = 1153;
     }
 
     public override string DefaultName => _orbType switch

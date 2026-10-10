@@ -1,1 +1,2 @@
 - Regenerate backpack after picking template due to not having a gypsy UI/UX
+- Swap avatar book item icon
