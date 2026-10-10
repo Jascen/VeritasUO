@@ -204,6 +204,8 @@ namespace Server.Mobiles
 
             m_GameTime = TimeSpan.Zero;
             m_GuildRank = RankDefinition.Lowest;
+
+            FollowersMax = 3;
         }
 
         public PlayerMobile(Serial s) : base(s)
