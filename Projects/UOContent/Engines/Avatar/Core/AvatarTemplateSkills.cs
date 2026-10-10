@@ -70,11 +70,6 @@ public static class AvatarTemplateSkills
         }
     }
 
-    public static void AddSkillBasedItems(Mobile m, ReadOnlySpan<SkillName> skills)
-    {
-        foreach (var skill in skills)
-        {
-            CharacterCreation.CharacterCreation.AddStarterSkillItems(m, skill);
-        }
-    }
+    public static void AddSkillBasedItems(Mobile m, ReadOnlySpan<SkillName> skills) =>
+        CharacterCreation.CharacterCreation.AddStarterSkillItems(m, skills);
 }
