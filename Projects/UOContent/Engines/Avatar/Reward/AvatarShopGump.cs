@@ -24,7 +24,8 @@ public class AvatarShopGump : DynamicGump
     private const int GIANT_COIN_ITEM_ID = 0x4FAD;
     private const int NAVIGATION_WIDTH = 152 + 20 + 20;
 
-    private const int BACKGROUND_WIDTH = 904;
+    private const int BACKGROUND_GUMP_ID = 0x06DB;
+	private const int BACKGROUND_WIDTH = 904;
     private const int BACKGROUND_HEIGHT = 729;
     private const int GUMP_WIDTH = BACKGROUND_WIDTH;
     private const int GUMP_HEIGHT = BACKGROUND_HEIGHT;
@@ -67,7 +68,7 @@ public class AvatarShopGump : DynamicGump
     {
         builder.AddPage();
 
-        builder.AddBackground(0, 0, BACKGROUND_WIDTH, BACKGROUND_HEIGHT, 2620);
+        builder.AddBackground(0, 0, BACKGROUND_WIDTH, BACKGROUND_HEIGHT, BACKGROUND_GUMP_ID);
         builder.AddHtml(11, 11, GUMP_WIDTH, 20, "The Avatar's Ascent", COOL_BLUE, align: TextAlignment.Center);
 
         AddCategoryList(ref builder, 27, 48);
@@ -652,13 +653,13 @@ public class AvatarShopGump : DynamicGump
 
         if (addBackground)
         {
-            builder.AddBackground(x, y, CARD_WIDTH, CARD_HEIGHT + 5, 2620);
+            builder.AddBackground(x, y, CARD_WIDTH, CARD_HEIGHT + 5, BACKGROUND_GUMP_ID);
         }
 
         // Item image
         if (itemId > BLANK_ITEM_ID)
         {
-            builder.AddBackground(x, y, GRAPHIC_SLOT_WIDTH, CARD_HEIGHT + 5, 2620);
+            builder.AddBackground(x, y, GRAPHIC_SLOT_WIDTH, CARD_HEIGHT + 5, BACKGROUND_GUMP_ID);
             AddCenteredItem(ref builder, itemId, x, y, GRAPHIC_SLOT_WIDTH, GRAPHIC_SLOT_HEIGHT);
             x += GRAPHIC_SLOT_WIDTH;
         }
@@ -731,7 +732,7 @@ public class AvatarShopGump : DynamicGump
         var firstRowY = y + 20 - 3;
         var secondRowY = firstRowY + 20;
 
-        builder.AddBackground(x, y, CATEGORY_WIDTH, CARD_HEIGHT + 5, 2620);
+        builder.AddBackground(x, y, CATEGORY_WIDTH, CARD_HEIGHT + 5, BACKGROUND_GUMP_ID);
         AddCenteredItem(ref builder, GIANT_COIN_ITEM_ID, x + 10, y, 40, CARD_HEIGHT + 5);
         builder.AddTooltip(TooltipCliloc, "Coins are earned by killing monsters.");
         builder.AddHtml(
@@ -793,7 +794,7 @@ public class AvatarShopGump : DynamicGump
                 );
             }
 
-            builder.AddBackground(x, rowY, CATEGORY_WIDTH, HEIGHT_PER_ITEM - 6, 2620);
+            builder.AddBackground(x, rowY, CATEGORY_WIDTH, HEIGHT_PER_ITEM - 6, BACKGROUND_GUMP_ID);
             builder.AddImage(x + 17, rowY + 10, isSelected ? 1210 : 1209, isSelected ? 1152 : 0);
 
             var categoryName = category switch
@@ -830,7 +831,7 @@ public class AvatarShopGump : DynamicGump
         var rightColumnX = leftColumnX + leftColumnWidth + PADDING;
         var rightColumnWidth = leftColumnWidth - PADDING;
 
-        builder.AddBackground(x, y, COMPACT_CARD_WIDTH, COMPACT_CARD_HEIGHT, 2620);
+        builder.AddBackground(x, y, COMPACT_CARD_WIDTH, COMPACT_CARD_HEIGHT, BACKGROUND_GUMP_ID);
 
         y += PADDING;
 
@@ -866,7 +867,7 @@ public class AvatarShopGump : DynamicGump
     {
         if (addBackground)
         {
-            builder.AddBackground(x, y, CARD_WIDTH, CARD_HEIGHT + 5, 2620);
+            builder.AddBackground(x, y, CARD_WIDTH, CARD_HEIGHT + 5, BACKGROUND_GUMP_ID);
         }
 
         var count = metrics.Length;
