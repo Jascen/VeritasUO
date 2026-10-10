@@ -21,11 +21,11 @@ public static class RegionAnnouncer
 
         if (newName != null)
         {
-            m.SendMessage($"{newName}");
+            m.SendMessage($"Now entering: {newName}");
         }
         else
         {
-            m.SendMessage($"Land of {map.Name}");
+            m.SendMessage($"Now entering: The land of {map.Name}");
         }
     }
 
