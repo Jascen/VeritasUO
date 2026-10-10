@@ -68,6 +68,7 @@ public static partial class RewardFactory
                     }
 
                     AvatarEngine.ApplyContext(from, from.Avatar);
+                    AvatarEngine.RecreateBackpack(from);
                     context.ApplyTemplate(from, context.SelectedTemplate);
                     from.SendMessage("Your skills have been set to the chosen template.");
                 }

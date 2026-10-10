@@ -38,7 +38,49 @@ public class AvatarEngine : GenericPersistence
     public static void InitializePlayer(PlayerMobile player)
     {
         player.InitStats(10, 10, 10);
+        InitializePlayerItems(player);
+    }
 
+    /// <summary>
+    /// Replaces the backpack contents and worn items with a fresh starter kit. The bank, mount and Avatar book are kept.
+    /// </summary>
+    public static void RecreateBackpack(PlayerMobile player)
+    {
+        var pack = player.Backpack;
+        var bank = player.BankBox;
+
+        using var toDelete = PooledRefQueue<Item>.Create();
+
+        foreach (var item in player.Items)
+        {
+            if (item != pack && item != bank && item.Layer != Layer.Mount)
+            {
+                toDelete.Enqueue(item);
+            }
+        }
+
+        if (pack != null)
+        {
+            foreach (var item in pack.Items)
+            {
+                if (item is not AvatarBook)
+                {
+                    toDelete.Enqueue(item);
+                }
+            }
+        }
+
+        while (toDelete.Count > 0)
+        {
+            toDelete.Dequeue().Delete();
+        }
+
+        CharacterCreation.CharacterCreation.AddBackpack(player);
+        InitializePlayerItems(player);
+    }
+
+    private static void InitializePlayerItems(PlayerMobile player)
+    {
         if (player.Backpack == null)
         {
             player.AddItem(new Backpack { Movable = false });

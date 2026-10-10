@@ -160,7 +160,7 @@ public static partial class CharacterCreation
     [GeneratedEvent(nameof(CharacterCreatedEvent))]
     public static partial void CharacterCreatedEvent(CharacterCreatedEventArgs e);
 
-    private static void AddBackpack(this Mobile m)
+    public static void AddBackpack(this Mobile m)
     {
         var pack = m.Backpack;
 

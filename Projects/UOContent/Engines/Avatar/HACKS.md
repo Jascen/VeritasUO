@@ -1,0 +1,1 @@
+- Regenerate backpack after picking template due to not having a gypsy UI/UX
