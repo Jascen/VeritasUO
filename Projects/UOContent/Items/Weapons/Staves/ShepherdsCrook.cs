@@ -1,6 +1,4 @@
-using System;
 using ModernUO.Serialization;
-using Server.Engines.CannedEvil;
 using Server.Mobiles;
 using Server.Targeting;
 
@@ -10,6 +8,9 @@ namespace Server.Items
     [SerializationGenerator(0, false)]
     public partial class ShepherdsCrook : BaseStaff
     {
+        // Runtime only: a Focus does not survive a restart or leaving the wielder's hands.
+        private Mobile _focus;
+
         [Constructible]
         public ShepherdsCrook() : base(0xE81) => Resource = CraftResource.RegularWood;
 
@@ -31,128 +32,94 @@ namespace Server.Items
         public override int InitMinHits => 31;
         public override int InitMaxHits => 50;
 
-        public override void OnDoubleClick(Mobile from)
+        /// <summary>
+        /// The creature the wielder's pets are directed to fight. Pets fighting it get a Dominance check
+        /// before they cower. Lasts until it dies, a new Focus is set, or the crook leaves the wielder.
+        /// </summary>
+        public Mobile Focus
         {
-            from.SendLocalizedMessage(502464); // Target the animal you wish to herd.
-            from.Target = new HerdingTarget();
+            get
+            {
+                if (_focus?.Deleted == true || _focus?.Alive == false)
+                {
+                    _focus = null;
+                }
+
+                return _focus;
+            }
         }
 
-        private class HerdingTarget : Target
+        public static bool IsFocused(Mobile owner, Mobile target) =>
+            target != null && owner.FindItemOnLayer(Layer.TwoHanded) is ShepherdsCrook crook && crook.Focus == target;
+
+        public override void OnDoubleClick(Mobile from)
         {
-            private static readonly Type[] m_ChampTamables =
+            if (Parent != from)
             {
-                typeof(StrongMongbat), typeof(Imp), typeof(Scorpion), typeof(GiantSpider),
-                typeof(Snake), typeof(LavaLizard), typeof(Drake), typeof(Dragon),
-                typeof(Kirin), typeof(Unicorn), typeof(GiantRat), typeof(Slime),
-                typeof(DireWolf), typeof(HellHound), typeof(DeathwatchBeetle),
-                typeof(LesserHiryu), typeof(Hiryu)
-            };
-
-            public HerdingTarget() : base(10, false, TargetFlags.None)
-            {
+                from.SendMessage("You must be wielding the crook to direct your followers.");
+                return;
             }
 
-            protected override void OnTarget(Mobile from, object targ)
+            from.SendMessage("Whom do you wish your followers to focus on?");
+            from.Target = new FocusTarget(this);
+        }
+
+        public override void OnRemoved(IEntity parent)
+        {
+            _focus = null;
+            base.OnRemoved(parent);
+        }
+
+        public override void OnDelete()
+        {
+            _focus = null;
+            base.OnDelete();
+        }
+
+        private void SetFocus(Mobile from, Mobile target)
+        {
+            _focus = target;
+            from.SendMessage($"Your followers focus on {target.Name}.");
+
+            if (from is not PlayerMobile { AllFollowers: { } followers })
             {
-                if (targ is not BaseCreature bc)
+                return;
+            }
+
+            foreach (var follower in followers)
+            {
+                if (follower is BaseCreature { Controlled: true, Commandable: true, AIObject: { } ai } bc &&
+                    bc.ControlMaster == from)
                 {
-                    from.SendLocalizedMessage(502472); // You don't seem to be able to persuade that to move.
+                    // Same validation as "all kill": range, liveness, refusals and the control chance.
+                    ai.EndPickTarget(from, target, OrderType.Attack);
+                }
+            }
+        }
+
+        private class FocusTarget : Target
+        {
+            private readonly ShepherdsCrook _crook;
+
+            public FocusTarget(ShepherdsCrook crook) : base(14, false, TargetFlags.Harmful) => _crook = crook;
+
+            protected override void OnTarget(Mobile from, object targeted)
+            {
+                if (_crook.Deleted || _crook.Parent != from)
+                {
+                    from.SendMessage("You must be wielding the crook to direct your followers.");
                     return;
                 }
 
-                if (!IsHerdable(bc))
+                if (targeted is not Mobile target || target == from || !target.Alive ||
+                    target is BaseCreature { ControlMaster: { } master } && master == from ||
+                    !from.CanBeHarmful(target, false))
                 {
-                    from.SendLocalizedMessage(502468); // That is not a herdable animal.
+                    from.SendMessage("Your followers cannot focus on that.");
                     return;
                 }
 
-                if (bc.Controlled)
-                {
-                    bc.PrivateOverheadMessage(
-                        MessageType.Regular,
-                        0x3B2,
-                        502467, // That animal looks tame already.
-                        from.NetState
-                    );
-                }
-                else
-                {
-                    from.SendLocalizedMessage(502475); // Click where you wish the animal to go.
-                    from.Target = new InternalTarget(bc);
-                }
-            }
-
-            private static bool IsHerdable(BaseCreature bc)
-            {
-                if (bc.IsParagon)
-                {
-                    return false;
-                }
-
-                if (bc.Tamable)
-                {
-                    return true;
-                }
-
-                var map = bc.Map;
-
-                if (Region.Find(bc.Home, map) is ChampionSpawnRegion region)
-                {
-                    var spawn = region.Spawn;
-
-                    if (spawn?.IsChampionSpawn(bc) == true)
-                    {
-                        var t = bc.GetType();
-
-                        foreach (var type in m_ChampTamables)
-                        {
-                            if (type == t)
-                            {
-                                return true;
-                            }
-                        }
-                    }
-                }
-
-                return false;
-            }
-
-            private class InternalTarget : Target
-            {
-                private readonly BaseCreature m_Creature;
-
-                public InternalTarget(BaseCreature c) : base(10, true, TargetFlags.None) => m_Creature = c;
-
-                protected override void OnTarget(Mobile from, object targ)
-                {
-                    if (targ is not IPoint2D p)
-                    {
-                        return;
-                    }
-
-                    var min = m_Creature.MinTameSkill - 30;
-                    var max = m_Creature.MinTameSkill + 30 + Utility.Random(10);
-
-                    if (max <= from.Skills.Herding.Value)
-                    {
-                        m_Creature.PrivateOverheadMessage(
-                            MessageType.Regular,
-                            0x3B2,
-                            502471, // That wasn't even challenging.
-                            from.NetState
-                        );
-                    }
-
-                    if (from.CheckTargetSkill(SkillName.Herding, m_Creature, min, max))
-                    {
-                        m_Creature.TargetLocation = targ != from ? new Point2D(p) : p;
-                        from.SendLocalizedMessage(502479); // The animal walks where it was instructed to.
-                    }
-                    else
-                    {
-                        from.SendLocalizedMessage(502472); // You don't seem to be able to persuade that to move.
-                    }
-                }
+                _crook.SetFocus(from, target);
             }
         }
     }

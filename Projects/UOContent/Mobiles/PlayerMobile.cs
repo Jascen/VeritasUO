@@ -205,7 +205,7 @@ namespace Server.Mobiles
             m_GameTime = TimeSpan.Zero;
             m_GuildRank = RankDefinition.Lowest;
 
-            FollowersMax = 3;
+            UpdateFollowersMax();
         }
 
         public PlayerMobile(Serial s) : base(s)
@@ -1110,13 +1110,32 @@ namespace Server.Mobiles
             }
         }
 
+        // Fires for base changes and for skill mods (equipped +skill items), unlike OnSkillChange.
         public override void OnSkillInvalidated(Skill skill)
         {
             if (Core.AOS && skill.SkillName == SkillName.MagicResist)
             {
                 UpdateResistances();
             }
+            else if (skill.SkillName == SkillName.Herding)
+            {
+                UpdateFollowersMax();
+            }
         }
+
+        /// <summary>
+        /// Dominance (Herding) sets the follower cap. Lowering it never releases existing followers;
+        /// the summon/claim slot checks only block new ones.
+        /// </summary>
+        public void UpdateFollowersMax() =>
+            FollowersMax = Skills.Herding.Value switch
+            {
+                >= 120.0 => 7,
+                >= 100.0 => 6,
+                >= 60.0  => 5,
+                >= 30.0  => 4,
+                _        => 3
+            };
 
         public override int GetMaxResistance(ResistanceType type)
         {
@@ -1276,6 +1295,9 @@ namespace Server.Mobiles
             }
 
             VirtueSystem.CheckAtrophies(from);
+
+            // FollowersMax is serialized; characters saved before Dominance carry the old flat cap.
+            from.UpdateFollowersMax();
             from.ClaimAutoStabledPets();
             AnimalForm.GetContext(from)?.Timer.Start();
             from.ResendBuffs();

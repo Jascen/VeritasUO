@@ -1212,6 +1212,11 @@ namespace Server.Mobiles
         /// </summary>
         public void IssueOrder(OrderType order, Mobile issuer, Mobile target = null)
         {
+            if (RefusesOrderWhileCowering(order, issuer))
+            {
+                return;
+            }
+
             // The interrupted order owns this; BaseAI.ResumeInterrupted hands it back.
             var interrupted = ControlTarget;
             ControlTarget = target;
@@ -1978,6 +1983,8 @@ namespace Server.Mobiles
             }
 
             ReceivedHonorContext?.OnTargetDamaged(from, amount);
+
+            OnDominanceDamage(amount, from, willKill);
 
             base.OnDamage(amount, from, willKill);
         }
