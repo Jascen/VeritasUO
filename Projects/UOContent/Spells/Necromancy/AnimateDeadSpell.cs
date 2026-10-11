@@ -9,6 +9,9 @@ namespace Server.Spells.Necromancy;
 
 public class AnimateDeadSpell : NecromancerSpell, ITargetingSpell<Item>
 {
+    // Spiritualism summon modifiers are disabled for animated dead; the skill check still runs.
+    private const bool AnimateDeadModifiersEnabled = false;
+
     private static readonly SpellInfo _info = new(
         "Animate Dead",
         "Uus Corp",
@@ -363,7 +366,7 @@ public class AnimateDeadSpell : NecromancerSpell, ITargetingSpell<Item>
 
             Effects.PlaySound(loc, map, bc.GetAngerSound());
 
-            BaseCreature.Summon(bc, false, caster, loc, 0x28, TimeSpan.FromDays(1.0));
+            BaseCreature.Summon(bc, false, caster, loc, 0x28, TimeSpan.FromDays(1.0), null, AnimateDeadModifiersEnabled);
         }
 
         if (summoned is SkeletalDragon dragon)

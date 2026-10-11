@@ -48,7 +48,7 @@ namespace Server.Spells.Spellweaving
                         break;
                     }
 
-                    SpellHelper.Summon(bc, Caster, Sound, duration, false, false);
+                    SpellHelper.Summon(bc, Caster, Sound, duration);
                 }
 
                 FinishSequence();

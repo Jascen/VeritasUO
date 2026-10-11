@@ -1,14 +1,110 @@
 using System;
+using System.Collections.Generic;
+using ModernUO.CodeGeneratedEvents;
 using Server.Items;
+using Server.Mobiles;
 using Server.Spells;
 
 namespace Server.SkillHandlers
 {
     public static class SpiritSpeak
     {
+        // Communion is the window after a successful Spiritualism use in which the next summon is empowered.
+        private static readonly Dictionary<Mobile, TimerExecutionToken> _communions = new();
+
+        private const double PenaltyModifier = -0.25;
+        private const double MaxSkillBonus = 0.05;
+
+        public static void Configure()
+        {
+            EventSink.Logout += OnLogout;
+        }
+
         public static void Initialize()
         {
             SkillInfo.Table[32].Callback = OnUse;
+        }
+
+        private static void OnLogout(Mobile m) => EndCommunion(m, false);
+
+        [OnEvent(nameof(PlayerMobile.PlayerDeathEvent))]
+        public static void OnPlayerDeathEvent(Mobile m) => EndCommunion(m, false);
+
+        public static bool IsInCommunion(Mobile m) => _communions.TryGetValue(m, out var token) && token.Running;
+
+        public static void BeginCommunion(Mobile m)
+        {
+            if (_communions.Remove(m, out var existing))
+            {
+                existing.Cancel();
+            }
+
+            Timer.StartTimer(GetCommunionDuration(m), () => EndCommunion(m, true), out var token);
+            _communions[m] = token;
+        }
+
+        public static void EndCommunion(Mobile m, bool message)
+        {
+            if (!_communions.Remove(m, out var token))
+            {
+                return;
+            }
+
+            token.Cancel();
+
+            // Only the pre-AOS skill grants ghost hearing.
+            if (!Core.AOS)
+            {
+                m.CanHearGhosts = false;
+            }
+
+            if (message)
+            {
+                m.SendLocalizedMessage(502445); // You feel your contact with the neitherworld fading.
+            }
+        }
+
+        private static TimeSpan GetCommunionDuration(Mobile m)
+        {
+            var secs = m.Skills.SpiritSpeak.Base / 50 * 90; // 15 seconds to 3.6 minutes
+
+            return TimeSpan.FromSeconds(Math.Max(secs, 15));
+        }
+
+        /// <summary>
+        /// Rolls the caster's Spiritualism check for a summon and returns the percentage modifier
+        /// (-0.25 on a failed check below 100, up to +0.25 at 120 while in communion).
+        /// </summary>
+        /// <param name="consume">Whether a communion bonus is spent by this summon.</param>
+        public static double GetSummonModifier(Mobile caster, bool consume)
+        {
+            var passed = caster.CheckSkill(SkillName.SpiritSpeak, 0.0, 120.0);
+            var skill = caster.Skills.SpiritSpeak.Value;
+
+            if (skill < 100.0)
+            {
+                return passed ? 0 : PenaltyModifier;
+            }
+
+            if (!IsInCommunion(caster))
+            {
+                return 0;
+            }
+
+            if (consume)
+            {
+                EndCommunion(caster, false);
+                caster.SendMessage("Your communion with the spirits empowers your summon.");
+            }
+
+            var bonus = Math.Min(skill - 100.0, 20.0) / 100.0;
+
+            if (skill >= 120.0)
+            {
+                bonus += MaxSkillBonus;
+            }
+
+            return bonus;
         }
 
         public static TimeSpan OnUse(Mobile m)
@@ -31,20 +127,8 @@ namespace Server.SkillHandlers
 
             if (m.CheckSkill(SkillName.SpiritSpeak, 0, 100))
             {
-                if (!m.CanHearGhosts)
-                {
-                    Timer t = new SpiritSpeakTimer(m);
-                    var secs = m.Skills.SpiritSpeak.Base / 50;
-                    secs *= 90;
-                    if (secs < 15)
-                    {
-                        secs = 15;
-                    }
-
-                    t.Delay = TimeSpan.FromSeconds(secs); // 15seconds to 3 minutes
-                    t.Start();
-                    m.CanHearGhosts = true;
-                }
+                BeginCommunion(m);
+                m.CanHearGhosts = true;
 
                 m.PlaySound(0x24A);
                 m.SendLocalizedMessage(502444); // You contact the neitherworld.
@@ -52,26 +136,11 @@ namespace Server.SkillHandlers
             else
             {
                 m.SendLocalizedMessage(502443); // You fail to contact the neitherworld.
+                EndCommunion(m, false);
                 m.CanHearGhosts = false;
             }
 
             return TimeSpan.FromSeconds(1.0);
-        }
-
-        private class SpiritSpeakTimer : Timer
-        {
-            private readonly Mobile m_Owner;
-
-            public SpiritSpeakTimer(Mobile m) : base(TimeSpan.FromMinutes(2.0))
-            {
-                m_Owner = m;
-            }
-
-            protected override void OnTick()
-            {
-                m_Owner.CanHearGhosts = false;
-                m_Owner.SendLocalizedMessage(502445); // You feel your contact with the neitherworld fading.
-            }
         }
 
         private class SpiritSpeakSpell : Spell
@@ -182,7 +251,15 @@ namespace Server.SkillHandlers
 
                         Caster.Hits += Utility.RandomMinMax(min, max);
 
+                        // Channeling a corpse also restores a quarter of a heal roll as mana.
+                        if (toChannel != null)
+                        {
+                            Caster.Mana += (int)(0.25 * Utility.RandomMinMax(min, max));
+                        }
+
                         Caster.FixedParticles(0x375A, 1, 15, 9501, 2100, 4, EffectLayer.Waist);
+
+                        BeginCommunion(Caster);
                     }
                 }
 
