@@ -469,35 +469,13 @@ namespace Server.Spells
                    Notoriety.Compute(from, to) != Notoriety.Innocent || from.Murderer;
         }
 
-        public static void Summon(
-            BaseCreature creature, Mobile caster, int sound, TimeSpan duration, bool scaleDuration,
-            bool scaleStats
-        )
+        public static void Summon(BaseCreature creature, Mobile caster, int sound, TimeSpan duration)
         {
             var map = caster.Map;
 
             if (map == null)
             {
                 return;
-            }
-
-            var scale = 1.0 + (caster.Skills.Magery.Value - 100.0) / 200.0;
-
-            if (scaleDuration)
-            {
-                duration *= scale;
-            }
-
-            if (scaleStats)
-            {
-                creature.RawStr = (int)(creature.RawStr * scale);
-                creature.Hits = creature.HitsMax;
-
-                creature.RawDex = (int)(creature.RawDex * scale);
-                creature.Stam = creature.StamMax;
-
-                creature.RawInt = (int)(creature.RawInt * scale);
-                creature.Mana = creature.ManaMax;
             }
 
             var p = new Point3D(caster);

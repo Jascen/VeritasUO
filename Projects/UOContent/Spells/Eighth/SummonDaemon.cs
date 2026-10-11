@@ -51,7 +51,7 @@ namespace Server.Spells.Eighth
                     _ => TimeSpan.FromSeconds(4 * Math.Max(5, Caster.Skills.Magery.Value)),
                 };
 
-                SpellHelper.Summon(new SummonedDaemon(), Caster, 0x216, duration, false, false);
+                SpellHelper.Summon(new SummonedDaemon(), Caster, 0x216, duration);
 
                 Titles.AwardKarma(Caster, -70, true);
             }

@@ -151,6 +151,7 @@ public class BaseCreatureSerializationTests : IDisposable
         bc.RemoveIfUntamed = true;
         bc.RemoveStep = 2;
         bc.CorpseNameOverride = "a test corpse";
+        bc.Modifiers = -0.25;
 
         var copy = Load(Snapshot(bc));
 
@@ -179,6 +180,7 @@ public class BaseCreatureSerializationTests : IDisposable
         Assert.True(copy.RemoveIfUntamed);
         Assert.Equal(2, copy.RemoveStep);
         Assert.Equal("a test corpse", copy.CorpseNameOverride);
+        Assert.Equal(-0.25, copy.Modifiers);
         Assert.Equal(master, copy.LastOwner);
     }
 
