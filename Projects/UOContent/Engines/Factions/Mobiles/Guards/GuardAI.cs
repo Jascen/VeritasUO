@@ -132,7 +132,7 @@ namespace Server.Factions
                     return TimeSpan.MaxValue;
                 }
 
-                var ts = m_BandageStart + _bandage.Delay - Core.Now;
+                var ts = m_BandageStart + _bandage.Duration - Core.Now;
 
                 if (ts < TimeSpan.FromSeconds(-1.0))
                 {
