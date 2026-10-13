@@ -46,7 +46,7 @@ namespace Server
         {
             typeof(MaleElvenRobe), typeof(FemaleElvenRobe), typeof(ElvenPants),
             typeof(ElvenShirt), typeof(ElvenDarkShirt), typeof(ElvenBoots),
-            typeof(VultureHelm), typeof(WoodlandBelt)
+            typeof(WoodlandBelt)
         };
 
         public static Type[] SEWeaponTypes { get; } =
