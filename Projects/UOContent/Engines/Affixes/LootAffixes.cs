@@ -15,7 +15,7 @@ public enum ItemRarity : byte
 /// AOS attribute objects; this only remembers which affixes produced them, for naming.
 /// </summary>
 [PropertyObject]
-[SerializationGenerator(0)]
+[SerializationGenerator(1)]
 public partial class LootAffixes
 {
     private const string MagicColor = "#4169E1";
@@ -42,6 +42,11 @@ public partial class LootAffixes
     [SerializableField(4, setter: "private")]
     private byte _rareName2;
 
+    // 0 means unknown: affixes rolled before the item level was recorded.
+    [SerializedCommandProperty(AccessLevel.GameMaster)]
+    [SerializableField(5, setter: "private")]
+    private byte _itemLevel;
+
     public LootAffixes(Item owner)
     {
         _owner = owner;
@@ -50,7 +55,7 @@ public partial class LootAffixes
     }
 
     public LootAffixes(
-        Item owner, ItemRarity rarity, int[] prefixes, int[] suffixes, byte rareName1, byte rareName2
+        Item owner, ItemRarity rarity, int[] prefixes, int[] suffixes, byte rareName1, byte rareName2, int itemLevel
     )
     {
         _owner = owner;
@@ -59,6 +64,16 @@ public partial class LootAffixes
         _suffixes = suffixes;
         _rareName1 = rareName1;
         _rareName2 = rareName2;
+        _itemLevel = (byte)Math.Clamp(itemLevel, Affixes.ItemLevel.Min, Affixes.ItemLevel.Max);
+    }
+
+    private void MigrateFrom(V0Content content)
+    {
+        _rarity = content.Rarity;
+        _prefixes = content.Prefixes;
+        _suffixes = content.Suffixes;
+        _rareName1 = content.RareName1;
+        _rareName2 = content.RareName2;
     }
 
     public Item Owner => _owner;
@@ -145,6 +160,14 @@ public partial class LootAffixes
         }
 
         return false;
+    }
+
+    public void AddItemLevelProperty(IPropertyList list)
+    {
+        if (_itemLevel > 0)
+        {
+            list.Add(1060658, $"{"Item Level"}\t{_itemLevel}"); // ~1_val~: ~2_val~
+        }
     }
 
     public override string ToString() => "...";

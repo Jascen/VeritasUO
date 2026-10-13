@@ -718,6 +718,8 @@ namespace Server.Items
         {
             base.GetProperties(list);
 
+            _lootAffixes?.AddItemLevelProperty(list);
+
             if (_crafter != null)
             {
                 list.Add(1050043, _crafter); // crafted by ~1_NAME~

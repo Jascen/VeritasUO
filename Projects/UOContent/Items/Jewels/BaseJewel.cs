@@ -387,6 +387,8 @@ public abstract partial class BaseJewel : Item, ICraftable, IAosItem, ILootAffix
     {
         base.GetProperties(list);
 
+        _lootAffixes?.AddItemLevelProperty(list);
+
         SkillBonuses.GetProperties(list);
 
         int prop;
