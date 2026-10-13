@@ -129,6 +129,51 @@ public class AvatarSystemTests
     }
 
     [Fact]
+    public void GrantStartingItemsGivesKitAndTemplateItems()
+    {
+        var player = CreatePlayer();
+        var context = AvatarEngine.GetOrCreateContext(player);
+        AvatarEngine.ResetInPlace(player);
+
+        // A fresh Avatar life holds only the Avatar book and soul orb until it leaves the sanctuary.
+        Assert.Null(player.Backpack.FindItemByType<Gold>());
+
+        context.SelectedTemplate = AvatarStarterTemplates.Warrior;
+        AvatarEngine.GrantStartingItems(player);
+
+        Assert.NotNull(player.Backpack.FindItemByType<Gold>());
+        var swordsBag = false;
+        foreach (var bag in player.Backpack.FindItemsByType<Bag>())
+        {
+            swordsBag |= bag.Name == player.Skills[SkillName.Swords].Name;
+        }
+
+        var books = 0;
+        foreach (var _ in player.Backpack.FindItemsByType<AvatarBook>())
+        {
+            books++;
+        }
+
+        Assert.True(swordsBag);
+        Assert.Equal(1, books);
+
+        Cleanup(player);
+    }
+
+    [Fact]
+    public void GrantStartingItemsIgnoresNonAvatars()
+    {
+        var player = CreatePlayer();
+        player.AddItem(new Backpack());
+
+        AvatarEngine.GrantStartingItems(player);
+
+        Assert.Empty(player.Backpack.Items);
+
+        Cleanup(player);
+    }
+
+    [Fact]
     public void UndraftedSkillsCannotGain()
     {
         var player = CreatePlayer();

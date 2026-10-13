@@ -89,7 +89,11 @@ public static class CampDeparture
                         return true;
                     }
 
-                    TemptationHooks.BeforeDeparture(pm, card, () => Complete(pm, card));
+                    TemptationHooks.BeforeDeparture(
+                        pm,
+                        card,
+                        () => AvatarHooks.BeforeDeparture(pm, () => Complete(pm, card))
+                    );
                     return true;
                 }
             case DepartureResult.TooFar:
@@ -125,6 +129,7 @@ public static class CampDeparture
             return;
         }
 
+        AvatarHooks.OnDeparting(pm);
         Depart(pm, args.Location, args.Map);
         logger.Information("{Player} left the gypsy camp with {Card} for {Location} on {Map}", pm, card.Title, args.Location, args.Map);
     }

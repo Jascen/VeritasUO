@@ -42,41 +42,20 @@ public class AvatarEngine : GenericPersistence
     }
 
     /// <summary>
-    /// Replaces the backpack contents and worn items with a fresh starter kit. The bank, mount, Avatar book and soul orb are kept.
+    /// Gives the starter kit and the selected template's items as the Avatar leaves the sanctuary. Choosing a template
+    /// in the sanctuary only sets stats and skills, so switching templates never hands out extra items.
     /// </summary>
-    public static void RecreateBackpack(PlayerMobile player)
+    public static void GrantStartingItems(PlayerMobile player)
     {
-        var pack = player.Backpack;
-        var bank = player.BankBox;
-
-        using var toDelete = PooledRefQueue<Item>.Create();
-
-        foreach (var item in player.Items)
+        var context = GetContextOrDefault(player);
+        if (!context.Active)
         {
-            if (item != pack && item != bank && item.Layer != Layer.Mount)
-            {
-                toDelete.Enqueue(item);
-            }
-        }
-
-        if (pack != null)
-        {
-            foreach (var item in pack.Items)
-            {
-                if (item is not AvatarBook and not SoulOrb)
-                {
-                    toDelete.Enqueue(item);
-                }
-            }
-        }
-
-        while (toDelete.Count > 0)
-        {
-            toDelete.Dequeue().Delete();
+            return;
         }
 
         CharacterCreation.CharacterCreation.AddBackpack(player);
         InitializePlayerItems(player);
+        context.ApplyTemplate(player, context.SelectedTemplate);
     }
 
     private static void InitializePlayerItems(PlayerMobile player)
