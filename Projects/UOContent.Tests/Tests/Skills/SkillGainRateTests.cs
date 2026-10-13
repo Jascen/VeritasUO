@@ -15,8 +15,7 @@ public class SkillGainRateTests
     [InlineData(105.0, 0.46)]
     [InlineData(110.0, 0.42)]
     [InlineData(115.0, 0.38)]
-    [InlineData(125.0, 0.38)]
-    [InlineData(125.1, 1.0)]
+    [InlineData(120.0, 0.38)]
     public void SkillLevelMultiplier_MatchesMementoCurve(double skillBase, double expected)
     {
         Assert.Equal(expected, SkillCheck.GetSkillLevelGainMultiplier(skillBase));

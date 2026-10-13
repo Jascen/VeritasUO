@@ -176,8 +176,7 @@ public static class SkillCheck
             <= 95.0  => 0.5,
             <= 105.0 => 0.46,
             <= 110.0 => 0.42,
-            <= 125.0 => 0.38,
-            _        => 1.0
+            _        => 0.38
         };
 
     public static bool Mobile_SkillCheckTarget(
