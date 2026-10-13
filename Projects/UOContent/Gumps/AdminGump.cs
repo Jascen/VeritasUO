@@ -4066,6 +4066,12 @@ namespace Server.Gumps
                 InvokeCommand($"GenerateSpawners Data/Spawns/{folder}/felucca/**.json");
                 InvokeCommand("GenerateSpawners Data/Spawns/shared/felucca/**.json");
             }
+
+            // Ruins is a custom map loaded from map-definitions.json, so it has no MapSelectionFlags entry.
+            if (Map.TryParse("Ruins", null, out _))
+            {
+                InvokeCommand("GenerateSpawners Data/Spawns/veritas/ruins/**.json");
+            }
         }
 
         private void Shutdown(bool restart, bool save)

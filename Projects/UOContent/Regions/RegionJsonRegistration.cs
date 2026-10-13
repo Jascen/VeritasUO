@@ -1,4 +1,6 @@
-﻿namespace Server.Regions;
+﻿using Server.Veritas.StartingCamp;
+
+namespace Server.Regions;
 
 public static class RegionJsonRegistration
 {
@@ -59,5 +61,8 @@ public static class RegionJsonRegistration
 
         // Myrmidex
         RegionJsonSerializer.Register<BattleRegion>();
+
+        // Veritas starter island
+        RegionJsonSerializer.Register<GypsyCampRegion>();
     }
 }
