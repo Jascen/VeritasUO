@@ -10,6 +10,7 @@ using Server.Maps;
 using Server.Misc;
 using Server.Mobiles;
 using Server.Network;
+using Server.Veritas.StartingCamp;
 
 namespace Server.Engines.CharacterCreation;
 
@@ -312,6 +313,12 @@ public static partial class CharacterCreation
 
     private static CityInfo GetStartLocation(CharacterCreatedEventArgs args)
     {
+        // Everyone, staff included, starts at the gypsy camp; she replaces the city picked on the creation screen.
+        if (GypsyCamp.TryGetStartLocation(out var camp))
+        {
+            return camp;
+        }
+
         var availableMaps = ExpansionInfo.CoreExpansion.MapSelectionFlags;
         var m = args.Mobile;
 
