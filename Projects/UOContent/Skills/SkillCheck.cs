@@ -144,6 +144,11 @@ public static class SkillCheck
                     gc *= 2;
                 }
 
+                if (from is PlayerMobile)
+                {
+                    gc *= GetSkillLevelGainMultiplier(skill.Base);
+                }
+
                 if (gc >= Utility.RandomDouble())
                 {
                     Gain(from, skill);
@@ -159,6 +164,21 @@ public static class SkillCheck
 
         return success;
     }
+
+    // Memento's accelerated curve: fast below 50, tapering toward GM and beyond.
+    // Applied after the 0.01 floor, so it can push the effective minimum below 1%.
+    public static double GetSkillLevelGainMultiplier(double skillBase) =>
+        skillBase switch
+        {
+            <= 50.0  => 1.5,
+            <= 70.0  => 1.0,
+            <= 85.0  => 0.75,
+            <= 95.0  => 0.5,
+            <= 105.0 => 0.46,
+            <= 110.0 => 0.42,
+            <= 125.0 => 0.38,
+            _        => 1.0
+        };
 
     public static bool Mobile_SkillCheckTarget(
         Mobile from, SkillName skillName, object target, double minSkill,
