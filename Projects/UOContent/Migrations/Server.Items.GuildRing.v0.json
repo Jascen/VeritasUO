@@ -1,0 +1,16 @@
+{
+  "version": 0,
+  "type": "Server.Items.GuildRing",
+  "properties": [
+    {
+      "name": "Owner",
+      "type": "Server.Mobile",
+      "rule": "SerializableInterfaceMigrationRule"
+    },
+    {
+      "name": "Guild",
+      "type": "Server.Mobiles.NpcGuild",
+      "rule": "EnumMigrationRule"
+    }
+  ]
+}
