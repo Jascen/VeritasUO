@@ -123,9 +123,6 @@ public static partial class CharacterCreation
         new("Royal City", "Royal City Inn", 1150169, 738, 3486, -19, Map.TerMur)
     ];
 
-    // Temporary: every new player character starts in New Haven regardless of client selection or profession.
-    private const bool ForceNewHavenStart = true;
-
     private static CityInfo[] _availableStartingCities;
 
     public static CityInfo[] GetStartingCities() =>
@@ -133,11 +130,6 @@ public static partial class CharacterCreation
 
     private static CityInfo[] ConstructAvailableStartingCities()
     {
-        if (ForceNewHavenStart)
-        {
-            return [NewHavenStartingCities[0]];
-        }
-
         var pre6000ClientSupport = TileMatrix.Pre6000ClientSupport;
         var availableMaps = ExpansionInfo.CoreExpansion.MapSelectionFlags;
         var trammelAvailable = availableMaps.Includes(MapSelectionFlags.Trammel);
@@ -329,11 +321,6 @@ public static partial class CharacterCreation
             {
                 return new CityInfo("Green Acres", "Green Acres", 5445, 1153, 0, map);
             }
-        }
-
-        if (ForceNewHavenStart)
-        {
-            return NewHavenStartingCities[0];
         }
 
         if (Core.SA)
