@@ -85,7 +85,20 @@ public static class TarotDeck
             ),
         };
 
-    public static TarotCard[] BuildFor(PlayerMobile pm) => Build(CampDeparture.GetAvailableCities(pm), pm.Race);
+    public static TarotCard[] BuildFor(PlayerMobile pm)
+    {
+        var cities = CampDeparture.GetAvailableCities(pm);
+        var cards = Build(cities, pm.Race);
+
+        if (cities.Length == 0 || !AvatarHooks.IsCardAvailable(pm))
+        {
+            return cards;
+        }
+
+        // Memento's Avatar card started in a random town.
+        var avatar = new TarotCard(AvatarHooks.CardKey, AvatarHooks.CardTitle, AvatarHooks.CardLore, cities.RandomElement());
+        return [..cards, avatar];
+    }
 
     internal static TarotCard[] Build(CityInfo[] cities, Race race)
     {

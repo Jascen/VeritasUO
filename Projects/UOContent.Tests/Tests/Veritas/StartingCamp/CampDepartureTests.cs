@@ -61,22 +61,27 @@ public class CampDepartureTests
             gypsy = new CampGypsy();
             gypsy.MoveToWorld(new Point3D(CampSpot.X + 1, CampSpot.Y, 0), Map.Felucca);
 
-            Assert.Equal(DepartureResult.Ok, CampDeparture.CanDepart(player, gypsy, city));
+            var card = CardFor(city);
+            Assert.Equal(DepartureResult.Ok, CampDeparture.CanDepart(player, gypsy, card));
 
-            var forged = new CityInfo("Forged", "Nowhere", 100, 100, 0, Map.Felucca);
+            var forged = CardFor(new CityInfo("Forged", "Nowhere", 100, 100, 0, Map.Felucca));
             Assert.Equal(DepartureResult.InvalidCity, CampDeparture.CanDepart(player, gypsy, forged));
 
+            // The Avatar card is hidden until the Avatar system is ported, so a forged draw of it is refused.
+            var avatar = new TarotCard(AvatarHooks.CardKey, AvatarHooks.CardTitle, AvatarHooks.CardLore, city);
+            Assert.Equal(DepartureResult.InvalidCity, CampDeparture.CanDepart(player, gypsy, avatar));
+
             gypsy.MoveToWorld(new Point3D(CampSpot.X + CampDeparture.TalkRange + 1, CampSpot.Y, 0), Map.Felucca);
-            Assert.Equal(DepartureResult.TooFar, CampDeparture.CanDepart(player, gypsy, city));
+            Assert.Equal(DepartureResult.TooFar, CampDeparture.CanDepart(player, gypsy, card));
 
             gypsy.Delete();
-            Assert.Equal(DepartureResult.GypsyGone, CampDeparture.CanDepart(player, gypsy, city));
-            Assert.Equal(DepartureResult.GypsyGone, CampDeparture.CanDepart(player, null, city));
+            Assert.Equal(DepartureResult.GypsyGone, CampDeparture.CanDepart(player, gypsy, card));
+            Assert.Equal(DepartureResult.GypsyGone, CampDeparture.CanDepart(player, null, card));
 
             // Ghost body rather than Kill(): the full death path needs systems the fixture does not configure.
             player.Body = 0x192;
             Assert.False(player.Alive);
-            Assert.Equal(DepartureResult.Dead, CampDeparture.CanDepart(player, gypsy, city));
+            Assert.Equal(DepartureResult.Dead, CampDeparture.CanDepart(player, gypsy, card));
         }
         finally
         {
@@ -86,7 +91,7 @@ public class CampDepartureTests
     }
 
     [Fact]
-    public void Depart_MovesPlayerToCity()
+    public void Complete_MovesPlayerToTheCardsCity()
     {
         var city = Array.Find(CharacterCreation.GetStartingCities(), c => c.Map != Map.TerMur);
         Assert.NotNull(city);
@@ -96,7 +101,7 @@ public class CampDepartureTests
         {
             player = CreatePlayer();
 
-            CampDeparture.Depart(player, city);
+            CampDeparture.Complete(player, CardFor(city));
 
             Assert.Equal(city.Location, player.Location);
             Assert.Same(city.Map, player.Map);
@@ -106,6 +111,32 @@ public class CampDepartureTests
             player?.Delete();
         }
     }
+
+    [Fact]
+    public void Complete_StaysPutForDeadPlayersAndInvalidCards()
+    {
+        var city = Array.Find(CharacterCreation.GetStartingCities(), c => c.Map != Map.TerMur);
+        Assert.NotNull(city);
+
+        PlayerMobile player = null;
+        try
+        {
+            player = CreatePlayer();
+
+            CampDeparture.Complete(player, CardFor(new CityInfo("Forged", "Nowhere", 100, 100, 0, Map.Felucca)));
+            Assert.Equal(CampSpot, player.Location);
+
+            player.Body = 0x192;
+            CampDeparture.Complete(player, CardFor(city));
+            Assert.Equal(CampSpot, player.Location);
+        }
+        finally
+        {
+            player?.Delete();
+        }
+    }
+
+    private static TarotCard CardFor(CityInfo city) => new(city.City, "Test Card", "Test lore.", city);
 
     private static PlayerMobile CreatePlayer()
     {

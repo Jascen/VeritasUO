@@ -4,8 +4,12 @@ using Server.Mobiles;
 
 namespace Server.Veritas.StartingCamp;
 
-public static class GypsyCamp
+public static partial class GypsyCamp
 {
+    /// <summary>Fired just before a player leaves the camp; subscribers may redirect or cancel the departure.</summary>
+    [GeneratedEvent(nameof(BeginJourneyEvent))]
+    public static partial void BeginJourneyEvent(BeginJourneyEventArgs e);
+
     public const string MapName = "Ruins";
     public const string CampName = "the Gypsy Camp";
 

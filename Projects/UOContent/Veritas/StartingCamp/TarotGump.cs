@@ -104,6 +104,6 @@ public class TarotGump : DynamicGump
             return;
         }
 
-        CampDeparture.TryDepart(pm, _gypsy, _cards[index].Destination);
+        CampDeparture.TryDepart(pm, _gypsy, _cards[index]);
     }
 }

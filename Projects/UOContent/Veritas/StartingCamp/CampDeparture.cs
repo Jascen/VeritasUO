@@ -52,7 +52,7 @@ public static class CampDeparture
         return list.ToArray();
     }
 
-    public static DepartureResult CanDepart(PlayerMobile pm, CampGypsy gypsy, CityInfo city)
+    public static DepartureResult CanDepart(PlayerMobile pm, CampGypsy gypsy, TarotCard card)
     {
         if (!pm.Alive)
         {
@@ -69,19 +69,27 @@ public static class CampDeparture
             return DepartureResult.TooFar;
         }
 
-        // Re-derive the list so a stale gump (client flags changed, era changed) cannot send anyone to a city they could not pick now.
-        return Array.IndexOf(GetAvailableCities(pm), city) >= 0 ? DepartureResult.Ok : DepartureResult.InvalidCity;
+        return IsCardStillValid(pm, card) ? DepartureResult.Ok : DepartureResult.InvalidCity;
     }
 
-    public static bool TryDepart(PlayerMobile pm, CampGypsy gypsy, CityInfo city)
-    {
-        var result = CanDepart(pm, gypsy, city);
+    // Re-derive availability so a stale gump (client flags, era or Avatar status changed) cannot send anyone where
+    // they could not choose now.
+    private static bool IsCardStillValid(PlayerMobile pm, TarotCard card) =>
+        (card.Key != AvatarHooks.CardKey || AvatarHooks.IsCardAvailable(pm)) &&
+        Array.IndexOf(GetAvailableCities(pm), card.Destination) >= 0;
 
-        switch (result)
+    public static bool TryDepart(PlayerMobile pm, CampGypsy gypsy, TarotCard card)
+    {
+        switch (CanDepart(pm, gypsy, card))
         {
             case DepartureResult.Ok:
                 {
-                    Depart(pm, city);
+                    if (card.Key == AvatarHooks.CardKey && AvatarHooks.OnCardDrawn(pm, card))
+                    {
+                        return true;
+                    }
+
+                    TemptationHooks.BeforeDeparture(pm, card, () => Complete(pm, card));
                     return true;
                 }
             case DepartureResult.TooFar:
@@ -99,7 +107,29 @@ public static class CampDeparture
         return false;
     }
 
-    internal static void Depart(PlayerMobile pm, CityInfo city)
+    // Runs after the pre-departure step, which may be a gump answered much later, so the gypsy's range is not
+    // re-checked but the player and card are.
+    internal static void Complete(PlayerMobile pm, TarotCard card)
+    {
+        if (pm.Deleted || !pm.Alive || !IsCardStillValid(pm, card))
+        {
+            return;
+        }
+
+        var destination = card.Destination;
+        var args = new BeginJourneyEventArgs(pm, card, destination.Location, destination.Map);
+        GypsyCamp.BeginJourneyEvent(args);
+
+        if (args.Cancel || args.Map == null || args.Map == Map.Internal)
+        {
+            return;
+        }
+
+        Depart(pm, args.Location, args.Map);
+        logger.Information("{Player} left the gypsy camp with {Card} for {Location} on {Map}", pm, card.Title, args.Location, args.Map);
+    }
+
+    internal static void Depart(PlayerMobile pm, Point3D location, Map map)
     {
         pm.CloseGump<TarotGump>();
 
@@ -110,15 +140,13 @@ public static class CampDeparture
             EffectItem.Create(pm.Location, pm.Map, EffectItem.DefaultDuration), 0x376A, 9, 32, 5024
         );
 
-        BaseCreature.TeleportPets(pm, city.Location, city.Map);
-        pm.MoveToWorld(city.Location, city.Map);
+        BaseCreature.TeleportPets(pm, location, map);
+        pm.MoveToWorld(location, map);
 
         Effects.SendLocationParticles(
             EffectItem.Create(pm.Location, pm.Map, EffectItem.DefaultDuration), 0x376A, 9, 32, 5024
         );
         pm.SendSound(0x65C);
         pm.SendMessage("The card crumbles to dust in your hand as the world shifts around you.");
-
-        logger.Information("{Player} left the gypsy for {City}", pm, city.City);
     }
 }
