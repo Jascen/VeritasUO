@@ -1,5 +1,7 @@
 using System;
 using System.Text.Json.Serialization;
+using Server.Gumps;
+using Server.Mobiles;
 using Server.Regions;
 using Server.Spells;
 
@@ -62,4 +64,24 @@ public class GypsyCampRegion : BaseRegion
     }
 
     public override TimeSpan GetLogoutDelay(Mobile m) => TimeSpan.Zero;
+
+    // New characters are placed here before they have a NetState, so DisplayTo no-ops for them and the login hook shows
+    // the story instead. This covers anyone moved onto the island afterwards.
+    public override void OnEnter(Mobile m)
+    {
+        base.OnEnter(m);
+
+        if (m is PlayerMobile)
+        {
+            CampWelcomeGump.DisplayTo(m);
+        }
+    }
+
+    public override void OnExit(Mobile m)
+    {
+        base.OnExit(m);
+
+        m.CloseGump<CampWelcomeGump>();
+        m.CloseGump<TarotGump>();
+    }
 }

@@ -1,4 +1,6 @@
+using ModernUO.CodeGeneratedEvents;
 using Server.Logging;
+using Server.Mobiles;
 
 namespace Server.Veritas.StartingCamp;
 
@@ -20,6 +22,15 @@ public static class GypsyCamp
     }
 
     public static bool IsInCamp(Mobile m) => m?.Region?.IsPartOf<GypsyCampRegion>() == true;
+
+    [OnEvent(nameof(PlayerMobile.PlayerLoginEvent))]
+    public static void OnLogin(PlayerMobile pm)
+    {
+        if (IsInCamp(pm))
+        {
+            CampWelcomeGump.DisplayTo(pm);
+        }
+    }
 
     /// <summary>
     /// The camp's arrival point, or false when new characters must use the stock start locations instead.

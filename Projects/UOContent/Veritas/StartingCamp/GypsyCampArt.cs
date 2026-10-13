@@ -18,6 +18,12 @@ public static class GypsyCampArt
     //TODO(art): Memento used 1102 (gypsy portrait).
     public const int Portrait = Placeholder;
 
+    //TODO(art): Memento used 2610 (welcome scroll background).
+    public const int WelcomeBackground = Placeholder;
+
+    //TODO(art): Memento used 11474 (welcome title banner).
+    public const int WelcomeHeader = Placeholder;
+
     //TODO(art): per-card faces default to this until each TarotCard gets its own art.
     public const int CardFace = Placeholder;
 }
