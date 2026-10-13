@@ -36,8 +36,7 @@ public class CampWelcomeGump : StaticGump<CampWelcomeGump>
     {
         builder.AddPage();
 
-        builder.AddImage(0, 0, GypsyCampArt.WelcomeBackground);
-        builder.AddImage(13, 12, GypsyCampArt.WelcomeHeader);
+		builder.AddBackground(0, 0, 500, 375, 0x06DB);
 
         builder.AddHtml(13, 58, 482, 312, WelcomeText, "#94C541", scrollbar: true);
 

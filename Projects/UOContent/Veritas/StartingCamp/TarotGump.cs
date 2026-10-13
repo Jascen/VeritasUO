@@ -55,12 +55,8 @@ public class TarotGump : DynamicGump
 
     protected override void BuildLayout(ref DynamicGumpBuilder builder)
     {
-        builder.AddPage();
-        builder.AddImage(0, 0, GypsyCampArt.Background);
-        builder.AddImage(10, 8, GypsyCampArt.Portrait);
-
         builder.AddPage(IntroPage);
-        builder.AddImage(271, 13, GypsyCampArt.Header);
+		builder.AddBackground(250, 0, 650, 400, 0x06DB);
         builder.AddHtml(278, 73, 604, 320, IntroText, TextColor, scrollbar: true);
         builder.AddButton(819, 14, 4011, 4013, 0, GumpButtonType.Page, FirstCardPage);
 
@@ -79,7 +75,7 @@ public class TarotGump : DynamicGump
 
         builder.AddPage(FirstCardPage + index);
 
-        builder.AddImage(640, 8, card.GumpArtId);
+		builder.AddBackground(250, 0, 400, 410, 0x06DB);
 
         builder.AddHtml(269, 12, 240, 20, card.Title, TextColor);
         builder.AddHtml(271, 47, 356, 297, $"{card.Destination.City} - {card.Destination.Building}<br><br>{card.Lore}", TextColor, scrollbar: true);

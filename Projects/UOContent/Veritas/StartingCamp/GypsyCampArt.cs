@@ -7,7 +7,7 @@ namespace Server.Veritas.StartingCamp;
 /// </summary>
 public static class GypsyCampArt
 {
-    public const int Placeholder = 0x0000;
+    public const int Placeholder = 0x9C4C;
 
     //TODO(art): Memento used 2611 (reading table background).
     public const int Background = Placeholder;
