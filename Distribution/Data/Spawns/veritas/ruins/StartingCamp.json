@@ -14,5 +14,21 @@
     "entries": [
       { "name": "CampGypsy", "maxCount": 1, "probability": 100 }
     ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "71f61c76-26a8-42c4-9173-f6510d48135b",
+    "name": "Starting Camp Journal",
+    "location": [123, 126, 6],
+    "map": "Ruins",
+    "count": 1,
+    "minDelay": "00:00:30",
+    "maxDelay": "00:01:00",
+    "team": 0,
+    "homeRange": 0,
+    "walkingRange": 0,
+    "entries": [
+      { "name": "GypsyJournal", "maxCount": 1, "probability": 100 }
+    ]
   }
 ]
