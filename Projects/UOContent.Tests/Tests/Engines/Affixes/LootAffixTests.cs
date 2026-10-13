@@ -28,17 +28,18 @@ public class LootAffixTests : IDisposable
         return item;
     }
 
-    public static TheoryData<string> ItemKinds => ["melee", "ranged", "armor", "shield", "hat", "jewel"];
+    public static TheoryData<string> ItemKinds => ["melee", "ranged", "armor", "shield", "hat", "clothing", "jewel"];
 
     private Item Create(string kind) => Track<Item>(
         kind switch
         {
-            "melee"  => new Katana(),
-            "ranged" => new Bow(),
-            "armor"  => new PlateChest(),
-            "shield" => new Buckler(),
-            "hat"    => new SkullCap(),
-            _        => new GoldRing()
+            "melee"    => new Katana(),
+            "ranged"   => new Bow(),
+            "armor"    => new PlateChest(),
+            "shield"   => new Buckler(),
+            "hat"      => new SkullCap(),
+            "clothing" => new Robe(),
+            _          => new GoldRing()
         }
     );
 
@@ -166,6 +167,13 @@ public class LootAffixTests : IDisposable
     }
 
     [Fact]
+    public void Hats_KeepHatMask_OtherClothingUsesClothingMask()
+    {
+        Assert.Equal(AffixItemMask.Hat, LootAffixGenerator.GetMask(Create("hat")));
+        Assert.Equal(AffixItemMask.Clothing, LootAffixGenerator.GetMask(Create("clothing")));
+    }
+
+    [Fact]
     public void HighLevelRares_ReachSixAffixes()
     {
         var max = 0;
@@ -263,6 +271,12 @@ public class LootAffixTests : IDisposable
                 {
                     Assert.True(armor.PhysicalBonus <= cap && armor.FireBonus <= cap && armor.ColdBonus <= cap);
                     Assert.True(armor.PoisonBonus <= cap && armor.EnergyBonus <= cap);
+                    break;
+                }
+            case BaseClothing clothing:
+                {
+                    var r = clothing.Resistances;
+                    Assert.True(r.Physical <= cap && r.Fire <= cap && r.Cold <= cap && r.Poison <= cap && r.Energy <= cap);
                     break;
                 }
             case BaseJewel jewel:

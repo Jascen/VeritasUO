@@ -19,9 +19,10 @@ public enum AffixItemMask : byte
     Shield = 0x08,
     Hat = 0x10,
     Jewelry = 0x20,
+    Clothing = 0x40,
 
     Weapon = Melee | Ranged,
-    Worn = Armor | Hat
+    Worn = Armor | Hat | Clothing
 }
 
 /// <summary>
