@@ -5,6 +5,7 @@ using ModernUO.CodeGeneratedEvents;
 using Server.Accounting;
 using Server.Collections;
 using Server.ContextMenus;
+using Server.Engines.Avatar;
 using Server.Engines.BuffIcons;
 using Server.Engines.BulkOrders;
 using Server.Engines.CannedEvil;
@@ -79,7 +80,16 @@ namespace Server.Mobiles
         TailorsGuild,
         FishermensGuild,
         BardsGuild,
-        BlacksmithsGuild
+        BlacksmithsGuild,
+        NecromancersGuild,
+        AlchemistsGuild,
+        DruidsGuild,
+        ArchersGuild,
+        CarpentersGuild,
+        CartographersGuild,
+        LibrariansGuild,
+        CulinariansGuild,
+        AssassinsGuild
     }
 
     public enum SolenFriendship
@@ -203,6 +213,8 @@ namespace Server.Mobiles
 
             m_GameTime = TimeSpan.Zero;
             m_GuildRank = RankDefinition.Lowest;
+
+            UpdateFollowersMax();
         }
 
         public PlayerMobile(Serial s) : base(s)
@@ -1107,13 +1119,32 @@ namespace Server.Mobiles
             }
         }
 
+        // Fires for base changes and for skill mods (equipped +skill items), unlike OnSkillChange.
         public override void OnSkillInvalidated(Skill skill)
         {
             if (Core.AOS && skill.SkillName == SkillName.MagicResist)
             {
                 UpdateResistances();
             }
+            else if (skill.SkillName == SkillName.Herding)
+            {
+                UpdateFollowersMax();
+            }
         }
+
+        /// <summary>
+        /// Dominance (Herding) sets the follower cap. Lowering it never releases existing followers;
+        /// the summon/claim slot checks only block new ones.
+        /// </summary>
+        public void UpdateFollowersMax() =>
+            FollowersMax = Skills.Herding.Value switch
+            {
+                >= 120.0 => 7,
+                >= 100.0 => 6,
+                >= 60.0  => 5,
+                >= 30.0  => 4,
+                _        => 3
+            };
 
         public override int GetMaxResistance(ResistanceType type)
         {
@@ -1273,6 +1304,9 @@ namespace Server.Mobiles
             }
 
             VirtueSystem.CheckAtrophies(from);
+
+            // FollowersMax is serialized; characters saved before Dominance carry the old flat cap.
+            from.UpdateFollowersMax();
             from.ClaimAutoStabledPets();
             AnimalForm.GetContext(from)?.Timer.Start();
             from.ResendBuffs();
@@ -1601,6 +1635,12 @@ namespace Server.Mobiles
             base.RevealingAction();
 
             IsStealthing = false; // IsStealthing should be moved to Server.Mobiles
+        }
+
+        public override void OnRegionChange(Region old, Region @new)
+        {
+            base.OnRegionChange(old, @new);
+            RegionAnnouncer.Announce(this, old, @new);
         }
 
         public override void OnHiddenChanged()
@@ -2378,8 +2418,33 @@ namespace Server.Mobiles
             base.OnDamage(amount, from, willKill);
         }
 
+        [CommandProperty(AccessLevel.GameMaster)]
+        public PlayerContext Avatar
+        {
+            get => AvatarEngine.GetContextOrDefault(this);
+            set { }
+        }
+
         public override void Resurrect()
         {
+            // Avatars are reborn through a full reset rather than a normal resurrection
+            if (Avatar.Active && !Alive && !AvatarEngine.IsResetting(this))
+            {
+                AvatarConfirm.Send(
+                    this,
+                    "Permanent Death",
+                    "Your character has died and cannot resurrect. Would you like to return to the Sanctuary to start over?",
+                    () =>
+                    {
+                        if (!Deleted && !Alive)
+                        {
+                            AvatarEngine.ResetInPlace(this);
+                        }
+                    }
+                );
+                return;
+            }
+
             var wasAlive = Alive;
 
             base.Resurrect();

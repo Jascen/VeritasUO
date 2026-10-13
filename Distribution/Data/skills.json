@@ -321,7 +321,7 @@
   },
   {
     "SkillID": 20,
-    "Name": "Herding",
+    "Name": "Dominance",
     "Title": "Shepherd",
     "StrScale": 0.1625,
     "DexScale": 0.0625,
@@ -513,7 +513,7 @@
   },
   {
     "SkillID": 32,
-    "Name": "Spirit Speak",
+    "Name": "Spiritualism",
     "Title": "Medium",
     "StrScale": 0,
     "DexScale": 0,

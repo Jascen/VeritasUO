@@ -3683,7 +3683,16 @@
       { "type": "TailorGuildmaster" },
       { "type": "ThiefGuildmaster" },
       { "type": "TinkerGuildmaster" },
-      { "type": "WarriorGuildmaster" }
+      { "type": "WarriorGuildmaster" },
+      { "type": "AlchemistGuildmaster" },
+      { "type": "ArcherGuildmaster" },
+      { "type": "AssassinGuildmaster" },
+      { "type": "CarpenterGuildmaster" },
+      { "type": "CartographerGuildmaster" },
+      { "type": "CulinaryGuildmaster" },
+      { "type": "DruidGuildmaster" },
+      { "type": "LibrarianGuildmaster" },
+      { "type": "NecromancerGuildmaster" }
     ]
   }
 ]

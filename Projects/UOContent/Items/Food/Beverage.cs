@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using ModernUO.CodeGeneratedEvents;
 using ModernUO.Serialization;
 using Server.Collections;
+using Server.Engines.FoodBuffs;
 using Server.Engines.Plants;
 using Server.Engines.Quests.Hag;
 using Server.Engines.Quests.Matriarch;
@@ -640,6 +641,7 @@ public abstract partial class BaseBeverage : Item, IHasQuantity
                 };
 
                 from.BAC = Math.Min(from.BAC + bac, 60);
+                FoodBuffSystem.OnAlcoholConsumed(from);
 
                 CheckHeaveTimer(from);
             }
@@ -815,6 +817,7 @@ public abstract partial class BaseBeverage : Item, IHasQuantity
             t.Stop();
 
             from.SendLocalizedMessage(500850); // You feel sober.
+            FoodBuffSystem.OnSober(from);
         }
     }
 
@@ -870,6 +873,7 @@ public abstract partial class BaseBeverage : Item, IHasQuantity
                     m_Table.Remove(m_Drunk);
 
                     m_Drunk.SendLocalizedMessage(500850); // You feel sober.
+                    FoodBuffSystem.OnSober(m_Drunk);
                 }
             }
         }

@@ -146,7 +146,7 @@ public sealed class AITimer : Timer
 
             HandleBardEffects();
 
-            if (_owner.Mobile.Controlled ? _owner.Obey() : _owner.Think())
+            if (_owner.TryDrive() || (_owner.Mobile.Controlled ? _owner.Obey() : _owner.Think()))
             {
                 HandleDetectHidden();
             }

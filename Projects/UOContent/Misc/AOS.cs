@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using ModernUO.Serialization;
+using Server.Engines.FoodBuffs;
 using Server.Items;
 using Server.Mobiles;
 using Server.Spells;
@@ -707,6 +708,8 @@ namespace Server
                 }
             }
 
+            value += FoodBuffSystem.GetBonus(m, attribute);
+
             return value;
         }
 
@@ -1006,6 +1009,8 @@ namespace Server
                     }
                 }
             }
+
+            value += FoodBuffSystem.GetBonus(m, attribute);
 
             return value;
         }

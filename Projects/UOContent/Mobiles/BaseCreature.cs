@@ -12,6 +12,7 @@ using Server.Engines.Spawners;
 using Server.Engines.Virtues;
 using Server.Ethics;
 using Server.Factions;
+using Server.Gumps;
 using Server.Items;
 using Server.Logging;
 using Server.Misc;
@@ -134,7 +135,7 @@ namespace Server.Mobiles
         public int CompareTo(DamageStore ds) => (ds?.m_Damage ?? 0).CompareTo(m_Damage);
     }
 
-    [SerializationGenerator(24, false)]
+    [SerializationGenerator(25, false)]
     public abstract partial class BaseCreature : Mobile, IHonorTarget, IQuestGiver
     {
         private static readonly ILogger logger = LogFactory.GetLogger(typeof(BaseCreature));
@@ -770,6 +771,14 @@ namespace Server.Mobiles
 
         private bool ShouldSerializeCorpseNameOverride() => _corpseNameOverride != null;
 
+        // Spiritualism summon modifier (-0.25 to +0.25), applied once when summoned.
+        [SerializableField(53)]
+        [SaveFlag(nameof(ShouldSerializeModifiers))]
+        [SerializedCommandProperty(AccessLevel.GameMaster)]
+        private double _modifiers;
+
+        private bool ShouldSerializeModifiers() => _modifiers != 0;
+
         // --- Non-serialized state -------------------------------------------------------
 
         // Herding - forces the mob to walk to a specific location, paced by the movement
@@ -1212,6 +1221,11 @@ namespace Server.Mobiles
         /// </summary>
         public void IssueOrder(OrderType order, Mobile issuer, Mobile target = null)
         {
+            if (RefusesOrderWhileCowering(order, issuer))
+            {
+                return;
+            }
+
             // The interrupted order owns this; BaseAI.ResumeInterrupted hands it back.
             var interrupted = ControlTarget;
             ControlTarget = target;
@@ -1979,6 +1993,8 @@ namespace Server.Mobiles
 
             ReceivedHonorContext?.OnTargetDamaged(from, amount);
 
+            OnDominanceDamage(amount, from, willKill);
+
             base.OnDamage(amount, from, willKill);
         }
 
@@ -2205,6 +2221,68 @@ namespace Server.Mobiles
             _controlled = content.Controlled;
             // A traded summon could still carry its caster as summon master; the owner wins.
             _master = content.ControlMaster ?? content.SummonMaster;
+            _controlTarget = content.ControlTarget;
+            _controlDest = content.ControlDest ?? Point3D.Zero;
+            _controlOrder = content.ControlOrder ?? OrderType.None;
+            _minTameSkill = content.MinTameSkill ?? 0;
+            _tamable = content.Tamable;
+            _summoned = content.Summoned;
+            _summonEnd = content.SummonEnd ?? DateTime.MinValue;
+            _controlSlots = content.ControlSlots ?? ControlSlotsDefaultValue();
+            _loyalty = content.Loyalty ?? LoyaltyDefaultValue();
+            _currentWayPoint = content.CurrentWayPoint;
+            _hitsMaxSeed = content.HitsMaxSeed ?? HitsMaxSeedDefaultValue();
+            _stamMaxSeed = content.StamMaxSeed ?? StamMaxSeedDefaultValue();
+            _manaMaxSeed = content.ManaMaxSeed ?? ManaMaxSeedDefaultValue();
+            _damageMin = content.DamageMin ?? DamageMinDefaultValue();
+            _damageMax = content.DamageMax ?? DamageMaxDefaultValue();
+            _physicalResistanceSeed = content.PhysicalResistanceSeed ?? 0;
+            _fireResistSeed = content.FireResistSeed ?? 0;
+            _coldResistSeed = content.ColdResistSeed ?? 0;
+            _poisonResistSeed = content.PoisonResistSeed ?? 0;
+            _energyResistSeed = content.EnergyResistSeed ?? 0;
+            _physicalDamage = content.PhysicalDamage ?? PhysicalDamageDefaultValue();
+            _fireDamage = content.FireDamage ?? 0;
+            _coldDamage = content.ColdDamage ?? 0;
+            _poisonDamage = content.PoisonDamage ?? 0;
+            _energyDamage = content.EnergyDamage ?? 0;
+            _owners = content.Owners ?? OwnersDefaultValue();
+            _isDeadPet = content.IsDeadPet;
+            _isBonded = content.IsBonded;
+            _bondingBegin = content.BondingBegin ?? DateTime.MinValue;
+            _ownerAbandonTime = content.OwnerAbandonTime ?? DateTime.MinValue;
+            _hasGeneratedLoot = content.HasGeneratedLoot;
+            _isParagon = content.IsParagon;
+            _friends = content.Friends;
+            _removeIfUntamed = content.RemoveIfUntamed;
+            _removeStep = content.RemoveStep ?? 0;
+
+            if (content.PendingDeleteTimerDelay != TimeSpan.MinValue)
+            {
+                DeserializePendingDeleteTimer(content.PendingDeleteTimerDelay);
+            }
+
+            _corpseNameOverride = content.CorpseNameOverride;
+        }
+
+        private void MigrateFrom(V24Content content)
+        {
+            _defaultAI = content.DefaultAI;
+            _currentAI = content.CurrentAI ?? CurrentAIDefaultValue();
+            _rangePerception = content.RangePerception ?? RangePerceptionDefaultValue();
+            _rangeFight = content.RangeFight ?? RangeFightDefaultValue();
+            _rangeHome = content.RangeHome ?? RangeHomeDefaultValue();
+            _team = content.Team ?? 0;
+            _fightMode = content.FightMode ?? FightModeDefaultValue();
+            _activeSpeed = content.ActiveSpeed ?? ActiveSpeedDefaultValue();
+            _passiveSpeed = content.PassiveSpeed ?? PassiveSpeedDefaultValue();
+            _currentSpeed = content.CurrentSpeed ?? CurrentSpeedDefaultValue();
+            _activeMoveSpeed = content.ActiveMoveSpeed ?? ActiveMoveSpeedDefaultValue();
+            _passiveMoveSpeed = content.PassiveMoveSpeed ?? PassiveMoveSpeedDefaultValue();
+            _home = content.Home ?? Point3D.Zero;
+            _homeMap = content.HomeMap;
+            _controlled = content.Controlled;
+            _master = content.Master;
             _controlTarget = content.ControlTarget;
             _controlDest = content.ControlDest ?? Point3D.Zero;
             _controlOrder = content.ControlOrder ?? OrderType.None;
@@ -2649,7 +2727,7 @@ namespace Server.Mobiles
         public virtual void OnGotMeleeAttack(Mobile attacker, int damage)
         {
             if (AutoDispel && attacker is BaseCreature creature && creature.IsDispellable &&
-                AutoDispelChance > Utility.RandomDouble())
+                creature.ScaleDispelChance(AutoDispelChance) > Utility.RandomDouble())
             {
                 Dispel(creature);
             }
@@ -2697,7 +2775,7 @@ namespace Server.Mobiles
             }
 
             if (AutoDispel && defender is BaseCreature creature && creature.IsDispellable &&
-                AutoDispelChance > Utility.RandomDouble())
+                creature.ScaleDispelChance(AutoDispelChance) > Utility.RandomDouble())
             {
                 Dispel(creature);
             }
@@ -3119,8 +3197,45 @@ namespace Server.Mobiles
             }
         }
 
+        // Mounts are excluded: double-click mounts them.
+        public bool CanBeDispelledBy(Mobile from) =>
+            !Deleted && Summoned && this is not IMount && from.Alive && SummonMaster == from &&
+            Map == from.Map && InRange(from, 14);
+
+        public void DispelSummon()
+        {
+            Effects.SendLocationParticles(
+                EffectItem.Create(Location, Map, EffectItem.DefaultDuration),
+                0x3728,
+                8,
+                20,
+                5042
+            );
+            Effects.PlaySound(this, 0x201);
+
+            UnsummonTimer.UnsummonNow(this);
+        }
+
         public override void OnDoubleClick(Mobile from)
         {
+            if (CanBeDispelledBy(from))
+            {
+                from.SendGump(
+                    new ConfirmationGump(
+                        "Dispel Summon",
+                        "Are you sure you want to dispel your summon?",
+                        () =>
+                        {
+                            if (CanBeDispelledBy(from))
+                            {
+                                DispelSummon();
+                            }
+                        }
+                    )
+                );
+                return;
+            }
+
             if (from.AccessLevel >= AccessLevel.GameMaster && !Body.IsHuman)
             {
                 var pack = Backpack;
@@ -3190,7 +3305,22 @@ namespace Server.Mobiles
                     list.Add(502006); // (tame)
                 }
             }
+
+            if (_modifiers != 0)
+            {
+                list.Add($"{GetModifierDescriptor(_modifiers)}");
+            }
         }
+
+        private static string GetModifierDescriptor(double mod) =>
+            mod switch
+            {
+                < 0     => "Faltering Spirit",
+                >= 0.25 => "Exalted Spirit",
+                >= 0.15 => "Empowered Spirit",
+                >= 0.05 => "Bound Spirit",
+                _       => "Touched Spirit"
+            };
 
         public override void OnSingleClick(Mobile from)
         {
@@ -3821,6 +3951,14 @@ namespace Server.Mobiles
         public static bool Summon(
             BaseCreature creature, bool controlled, Mobile caster, Point3D p, int sound,
             TimeSpan duration, Action onUnsummon
+        ) => Summon(creature, controlled, caster, p, sound, duration, onUnsummon, true);
+
+        /// <param name="allowModifiers">
+        /// When false, the caster's Spiritualism check still runs but the summon is not scaled.
+        /// </param>
+        public static bool Summon(
+            BaseCreature creature, bool controlled, Mobile caster, Point3D p, int sound,
+            TimeSpan duration, Action onUnsummon, bool allowModifiers
         )
         {
             if (caster.Followers + creature.ControlSlots > caster.FollowersMax)
@@ -3828,6 +3966,17 @@ namespace Server.Mobiles
                 caster.SendLocalizedMessage(1049645); // You have too many followers to summon that creature.
                 creature.Delete();
                 return false;
+            }
+
+            if (caster is PlayerMobile)
+            {
+                var mod = SpiritSpeak.GetSummonModifier(caster, allowModifiers);
+
+                if (allowModifiers && mod != 0)
+                {
+                    creature.ApplyModifiers(mod);
+                    duration *= 1 + mod;
+                }
             }
 
             Summoning = true;
@@ -4946,6 +5095,66 @@ namespace Server.Mobiles
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetCurrentSpeedToPassive() => CurrentSpeed = PassiveSpeed;
+
+        public double ScaleDispelChance(double chance) => chance * (1 - _modifiers);
+
+        /// <summary>
+        /// Scales stats, resists, skills and damage by (1 + mod) and records the modifier.
+        /// </summary>
+        public void ApplyModifiers(double mod)
+        {
+            if (mod == 0)
+            {
+                return;
+            }
+
+            var k = 1 + mod;
+
+            if (HitsMaxSeed != -1)
+            {
+                HitsMaxSeed = Math.Max(1, (int)(HitsMaxSeed * k));
+            }
+
+            if (StamMaxSeed != -1)
+            {
+                StamMaxSeed = Math.Max(1, (int)(StamMaxSeed * k));
+            }
+
+            if (ManaMaxSeed != -1)
+            {
+                ManaMaxSeed = Math.Max(1, (int)(ManaMaxSeed * k));
+            }
+
+            RawStr = Math.Max(1, (int)(RawStr * k));
+            RawDex = Math.Max(1, (int)(RawDex * k));
+            RawInt = Math.Max(1, (int)(RawInt * k));
+
+            Hits = HitsMax;
+            Stam = StamMax;
+            Mana = ManaMax;
+
+            SetResistance(ResistanceType.Physical, ScaleResist(_physicalResistanceSeed, k));
+            SetResistance(ResistanceType.Fire, ScaleResist(_fireResistSeed, k));
+            SetResistance(ResistanceType.Cold, ScaleResist(_coldResistSeed, k));
+            SetResistance(ResistanceType.Poison, ScaleResist(_poisonResistSeed, k));
+            SetResistance(ResistanceType.Energy, ScaleResist(_energyResistSeed, k));
+
+            for (var i = 0; i < Skills.Length; i++)
+            {
+                var skill = Skills[i];
+
+                if (skill.Base > 0)
+                {
+                    skill.Base = Math.Min(skill.Base * k, 120.0);
+                }
+            }
+
+            SetDamage(Math.Max(1, (int)(DamageMin * k)), Math.Max(1, (int)(DamageMax * k)));
+
+            Modifiers = mod;
+        }
+
+        private static int ScaleResist(int seed, double k) => Math.Clamp((int)(seed * k), 0, 80);
 
         public void SetDamage(int val) => SetDamage(val, val);
 

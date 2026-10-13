@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using ModernUO.Serialization;
+using Server.Engines.Affixes;
 using Server.Engines.Craft;
 using Server.Ethics;
 using Server.Factions;
@@ -22,9 +23,9 @@ namespace Server.Items
         int MaxArcaneCharges { get; set; }
     }
 
-    [SerializationGenerator(8, false)]
+    [SerializationGenerator(9, false)]
     public abstract partial class BaseClothing
-        : Item, IDyable, IScissorable, IFactionItem, ICraftable, IWearableDurability, IAosItem
+        : Item, IDyable, IScissorable, IFactionItem, ICraftable, IWearableDurability, IAosItem, ILootAffixItem
     {
         private bool ShouldSerializeResource() => _resource != DefaultResource;
 
@@ -95,6 +96,15 @@ namespace Server.Items
 
         // Field 9
         private int _strReq = -1;
+
+        [InvalidateProperties]
+        [SerializedIgnoreDupe]
+        [SerializableField(10)]
+        [SaveFlag(nameof(ShouldSerializeLootAffixes))]
+        [SerializedCommandProperty(AccessLevel.GameMaster, canModify: true)]
+        private LootAffixes _lootAffixes;
+
+        private bool ShouldSerializeLootAffixes() => _lootAffixes?.IsEmpty == false;
 
         private FactionItem _factionState;
 
@@ -654,6 +664,11 @@ namespace Server.Items
 
         public override void AddNameProperty(IPropertyList list)
         {
+            if (_lootAffixes?.AddNameProperty(list, this, Name) == true)
+            {
+                return;
+            }
+
             var oreType = _resource switch
             {
                 CraftResource.DullCopper    => 1053108,

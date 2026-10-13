@@ -4,6 +4,20 @@ namespace Server.Items;
 
 public partial class BaseClothing
 {
+    private void MigrateFrom(V8Content content)
+    {
+        _resource = content.Resource ?? DefaultResource;
+        _attributes = content.Attributes ?? AttributesDefaultValue();
+        _clothingAttributes = content.ClothingAttributes ?? ClothingAttributesDefaultValue();
+        _skillBonuses = content.SkillBonuses ?? SkillBonusesDefaultValue();
+        _resistances = content.Resistances ?? ResistancesDefaultValue();
+        _maxHitPoints = content.MaxHitPoints ?? 0;
+        _hitPoints = content.HitPoints ?? 0;
+        _crafter = content.Crafter;
+        _quality = content.Quality ?? ClothingQuality.Regular;
+        _strReq = content.StrRequirement ?? -1;
+    }
+
     // PlayerConstructed moved onto Item
     private void MigrateFrom(V7Content content)
     {

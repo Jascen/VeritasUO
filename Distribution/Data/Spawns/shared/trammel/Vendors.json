@@ -435,14 +435,15 @@
     "name": "Spawner (125)",
     "location": [1409, 1590, 42],
     "map": "Trammel",
-    "count": 1,
+    "count": 2,
     "minDelay": "00:05:00",
     "maxDelay": "00:10:00",
     "team": 0,
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Scribe", "maxCount": 1, "probability": 100 }
+      { "name": "Scribe", "maxCount": 1, "probability": 100 },
+      { "name": "LibrarianGuildmaster", "maxCount": 1, "probability": 100 }
     ]
   },
   {
@@ -916,7 +917,7 @@
     "name": "Spawner (125)",
     "location": [1498, 1659, 27],
     "map": "Trammel",
-    "count": 3,
+    "count": 4,
     "minDelay": "00:05:00",
     "maxDelay": "00:10:00",
     "team": 0,
@@ -925,7 +926,8 @@
     "entries": [
       { "name": "Herbalist", "maxCount": 1, "probability": 100 },
       { "name": "Alchemist", "maxCount": 1, "probability": 100 },
-      { "name": "CustomHairstylist", "maxCount": 1, "probability": 100 }
+      { "name": "CustomHairstylist", "maxCount": 1, "probability": 100 },
+      { "name": "DruidGuildmaster", "maxCount": 1, "probability": 100 }
     ]
   },
   {
@@ -1604,14 +1606,15 @@
     "name": "Spawner (125)",
     "location": [624, 1145, 0],
     "map": "Trammel",
-    "count": 1,
+    "count": 2,
     "minDelay": "00:05:00",
     "maxDelay": "00:10:00",
     "team": 0,
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Bowyer", "maxCount": 1, "probability": 100 }
+      { "name": "Bowyer", "maxCount": 1, "probability": 100 },
+      { "name": "ArcherGuildmaster", "maxCount": 1, "probability": 100 }
     ]
   },
   {
@@ -3183,7 +3186,7 @@
     "name": "Spawner (125)",
     "location": [4409, 1111, 0],
     "map": "Trammel",
-    "count": 3,
+    "count": 4,
     "minDelay": "00:05:00",
     "maxDelay": "00:10:00",
     "team": 0,
@@ -3192,7 +3195,8 @@
     "entries": [
       { "name": "Herbalist", "maxCount": 1, "probability": 100 },
       { "name": "Alchemist", "maxCount": 1, "probability": 100 },
-      { "name": "CustomHairstylist", "maxCount": 1, "probability": 100 }
+      { "name": "CustomHairstylist", "maxCount": 1, "probability": 100 },
+      { "name": "AlchemistGuildmaster", "maxCount": 1, "probability": 100 }
     ]
   },
   {
@@ -3998,7 +4002,7 @@
     "name": "Spawner (125)",
     "location": [2995, 815, 0],
     "map": "Trammel",
-    "count": 2,
+    "count": 3,
     "minDelay": "00:05:00",
     "maxDelay": "00:10:00",
     "team": 0,
@@ -4006,7 +4010,8 @@
     "walkingRange": 5,
     "entries": [
       { "name": "Shipwright", "maxCount": 1, "probability": 100 },
-      { "name": "Mapmaker", "maxCount": 1, "probability": 100 }
+      { "name": "Mapmaker", "maxCount": 1, "probability": 100 },
+      { "name": "CartographerGuildmaster", "maxCount": 1, "probability": 100 }
     ]
   },
   {
@@ -4838,7 +4843,7 @@
     "name": "Spawner (125)",
     "location": [2513, 477, 15],
     "map": "Trammel",
-    "count": 3,
+    "count": 4,
     "minDelay": "00:05:00",
     "maxDelay": "00:10:00",
     "team": 0,
@@ -4847,7 +4852,8 @@
     "entries": [
       { "name": "Carpenter", "maxCount": 1, "probability": 100 },
       { "name": "Architect", "maxCount": 1, "probability": 100 },
-      { "name": "RealEstateBroker", "maxCount": 1, "probability": 100 }
+      { "name": "RealEstateBroker", "maxCount": 1, "probability": 100 },
+      { "name": "CarpenterGuildmaster", "maxCount": 1, "probability": 100 }
     ]
   },
   {
@@ -5171,7 +5177,7 @@
     "name": "Spawner (125)",
     "location": [2680, 2238, 2],
     "map": "Trammel",
-    "count": 4,
+    "count": 5,
     "minDelay": "00:05:00",
     "maxDelay": "00:10:00",
     "team": 0,
@@ -5181,7 +5187,8 @@
       { "name": "TavernKeeper", "maxCount": 1, "probability": 100 },
       { "name": "Waiter", "maxCount": 1, "probability": 100 },
       { "name": "Cook", "maxCount": 1, "probability": 100 },
-      { "name": "Barkeeper", "maxCount": 1, "probability": 100 }
+      { "name": "Barkeeper", "maxCount": 1, "probability": 100 },
+      { "name": "CulinaryGuildmaster", "maxCount": 1, "probability": 100 }
     ]
   },
   {

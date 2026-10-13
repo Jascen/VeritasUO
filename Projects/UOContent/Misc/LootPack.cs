@@ -1,4 +1,5 @@
 using System;
+using Server.Engines.Affixes;
 using Server.Items;
 using Server.Mobiles;
 
@@ -703,46 +704,7 @@ namespace Server
             {
                 if (Core.AOS)
                 {
-                    var bonusProps = GetBonusProperties();
-                    var min = MinIntensity;
-                    var max = MaxIntensity;
-
-                    if (bonusProps < MaxProps && LootPack.CheckLuck(luckChance))
-                    {
-                        ++bonusProps;
-                    }
-
-                    var props = 1 + bonusProps;
-
-                    // Make sure we're not spawning items with 6 properties.
-                    if (props > MaxProps)
-                    {
-                        props = MaxProps;
-                    }
-
-                    if (item is BaseWeapon weapon)
-                    {
-                        BaseRunicTool.ApplyAttributesTo(weapon, false, luckChance, props, MinIntensity, MaxIntensity);
-                    }
-                    else if (item is BaseArmor armor)
-                    {
-                        BaseRunicTool.ApplyAttributesTo(armor, false, luckChance, props, MinIntensity, MaxIntensity);
-                    }
-                    else if (item is BaseJewel jewel)
-                    {
-                        BaseRunicTool.ApplyAttributesTo(jewel, false, luckChance, props, MinIntensity, MaxIntensity);
-                    }
-                    else
-                    {
-                        BaseRunicTool.ApplyAttributesTo(
-                            (BaseHat)item,
-                            false,
-                            luckChance,
-                            props,
-                            MinIntensity,
-                            MaxIntensity
-                        );
-                    }
+                    LootAffixGenerator.Apply(item, from, luckChance, MinIntensity, MaxIntensity);
                 }
                 else // not aos
                 {

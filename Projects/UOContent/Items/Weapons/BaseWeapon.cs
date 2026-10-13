@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using ModernUO.Serialization;
 using Server.Collections;
+using Server.Engines.Affixes;
 using Server.Engines.Craft;
 using Server.Engines.Virtues;
 using Server.Ethics;
@@ -27,9 +28,9 @@ public interface ISlayer
     SlayerName Slayer2 { get; set; }
 }
 
-[SerializationGenerator(11, false)]
+[SerializationGenerator(12, false)]
 public abstract partial class BaseWeapon
-    : Item, IWeapon, IFactionItem, ICraftable, ISlayer, IDurability, IAosItem, IIdentifiable
+    : Item, IWeapon, IFactionItem, ICraftable, ISlayer, IDurability, IAosItem, IIdentifiable, ILootAffixItem
 {
     private static bool _enableInstaHit;
 
@@ -178,6 +179,15 @@ public abstract partial class BaseWeapon
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool ShouldSerializeEngravedText() => !string.IsNullOrEmpty(_engravedText);
+
+    [InvalidateProperties]
+    [SerializedIgnoreDupe]
+    [SerializableField(30)]
+    [SaveFlag(nameof(ShouldSerializeLootAffixes))]
+    [SerializedCommandProperty(AccessLevel.GameMaster, canModify: true)]
+    private LootAffixes _lootAffixes;
+
+    private bool ShouldSerializeLootAffixes() => _lootAffixes?.IsEmpty == false;
 
     private FactionItem m_FactionState;
     private SkillMod m_SkillMod, m_MageMod;
@@ -2837,6 +2847,34 @@ public abstract partial class BaseWeapon
 
     public override void AddNameProperty(IPropertyList list)
     {
+        if (_lootAffixes?.AddNameProperty(list, this, Name) != true)
+        {
+            AddResourceNameProperty(list);
+        }
+
+        /*
+         * Want to move this to the engraving tool, let the non-harmful
+         * formatting show, and remove CLILOCs embedded: more like OSI
+         * did with the books that had markup, etc.
+         *
+         * This will have a negative effect on a few event things in-game
+         * as is.
+         *
+         * If we cant find a more OSI-ish way to clean it up, we can
+         * easily put this back, and use it in the deserialize
+         * method and engraving tool, to make it perm cleaned up.
+         */
+
+        if (!string.IsNullOrEmpty(_engravedText))
+        {
+            list.Add(1062613, _engravedText);
+        }
+
+        /* list.Add( 1062613, Utility.FixHtml( m_EngravedText ) ); */
+    }
+
+    private void AddResourceNameProperty(IPropertyList list)
+    {
         var oreType = _resource switch
         {
             CraftResource.DullCopper    => 1053108,
@@ -2880,26 +2918,6 @@ public abstract partial class BaseWeapon
         {
             list.Add(name);
         }
-
-        /*
-         * Want to move this to the engraving tool, let the non-harmful
-         * formatting show, and remove CLILOCs embedded: more like OSI
-         * did with the books that had markup, etc.
-         *
-         * This will have a negative effect on a few event things in-game
-         * as is.
-         *
-         * If we cant find a more OSI-ish way to clean it up, we can
-         * easily put this back, and use it in the deserialize
-         * method and engraving tool, to make it perm cleaned up.
-         */
-
-        if (!string.IsNullOrEmpty(_engravedText))
-        {
-            list.Add(1062613, _engravedText);
-        }
-
-        /* list.Add( 1062613, Utility.FixHtml( m_EngravedText ) ); */
     }
 
     public override bool AllowEquippedCast(Mobile from) =>

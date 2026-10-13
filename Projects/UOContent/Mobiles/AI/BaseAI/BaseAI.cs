@@ -137,6 +137,12 @@ public abstract partial class BaseAI
     /// </summary>
     public virtual bool OnAggressiveAction(Mobile aggressor)
     {
+        // Driven creatures and cowering pets do not fight back; damage ends a drive separately.
+        if (Mobile.IsDriven || Mobile.IsCowering)
+        {
+            return false;
+        }
+
         if (Mobile.RefusesGuardTarget(aggressor))
         {
             DebugSay("Friendly fire; I keep guarding.");

@@ -1,0 +1,47 @@
+{
+  "version": 0,
+  "type": "Server.Engines.Affixes.LootAffixes",
+  "properties": [
+    {
+      "name": "Rarity",
+      "type": "Server.Engines.Affixes.ItemRarity",
+      "rule": "EnumMigrationRule"
+    },
+    {
+      "name": "Prefixes",
+      "type": "int[]",
+      "rule": "ArrayMigrationRule",
+      "ruleArguments": [
+        "int",
+        "PrimitiveTypeMigrationRule",
+        "EncodedInt"
+      ]
+    },
+    {
+      "name": "Suffixes",
+      "type": "int[]",
+      "rule": "ArrayMigrationRule",
+      "ruleArguments": [
+        "int",
+        "PrimitiveTypeMigrationRule",
+        "EncodedInt"
+      ]
+    },
+    {
+      "name": "RareName1",
+      "type": "byte",
+      "rule": "PrimitiveTypeMigrationRule",
+      "ruleArguments": [
+        ""
+      ]
+    },
+    {
+      "name": "RareName2",
+      "type": "byte",
+      "rule": "PrimitiveTypeMigrationRule",
+      "ruleArguments": [
+        ""
+      ]
+    }
+  ]
+}

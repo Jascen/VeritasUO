@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using ModernUO.Serialization;
+using Server.Engines.Affixes;
 using Server.Engines.Craft;
 using Server.Ethics;
 using Server.Factions;
@@ -12,9 +13,9 @@ using AMT = Server.Items.ArmorMaterialType;
 
 namespace Server.Items
 {
-    [SerializationGenerator(10, false)]
+    [SerializationGenerator(11, false)]
     public abstract partial class BaseArmor
-        : Item, IScissorable, IFactionItem, ICraftable, IWearableDurability, IAosItem, IIdentifiable
+        : Item, IScissorable, IFactionItem, ICraftable, IWearableDurability, IAosItem, IIdentifiable, ILootAffixItem
     {
         [SerializedIgnoreDupe]
         [SerializableField(0, setter: "private")]
@@ -139,6 +140,15 @@ namespace Server.Items
         private bool ShouldSerializeSkillBonuses() => !_skillBonuses.IsEmpty;
 
         private AosSkillBonuses SkillBonusesDefaultValue() => new(this);
+
+        [InvalidateProperties]
+        [SerializedIgnoreDupe]
+        [SerializableField(24)]
+        [SaveFlag(nameof(ShouldSerializeLootAffixes))]
+        [SerializedCommandProperty(AccessLevel.GameMaster, canModify: true)]
+        private LootAffixes _lootAffixes;
+
+        private bool ShouldSerializeLootAffixes() => _lootAffixes?.IsEmpty == false;
 
         private FactionItem m_FactionState;
 
@@ -1192,6 +1202,11 @@ namespace Server.Items
 
         public override void AddNameProperty(IPropertyList list)
         {
+            if (_lootAffixes?.AddNameProperty(list, this, Name) == true)
+            {
+                return;
+            }
+
             var oreType = _resource switch
             {
                 CraftResource.DullCopper    => 1053108,

@@ -20,6 +20,22 @@ public class UnsummonTimer : Timer
         }
     }
 
+    /// <summary>
+    /// Ends the summon now, running the same delete and unsummon callback as expiry.
+    /// </summary>
+    public static void UnsummonNow(BaseCreature creature)
+    {
+        if (_timers.Remove(creature, out var timer))
+        {
+            timer.Stop();
+            timer.OnTick();
+        }
+        else
+        {
+            creature.Delete();
+        }
+    }
+
     public UnsummonTimer(BaseCreature creature, TimeSpan delay, Action onUnsummon = null) : base(delay)
     {
         _onUnsummon = onUnsummon;

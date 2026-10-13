@@ -43,8 +43,9 @@ namespace Server.Spells.Seventh
                             continue;
                         }
 
-                        var dispelChance =
-                            (50.0 + 100 * (Caster.Skills.Magery.Value - bc.DispelDifficulty) / (bc.DispelFocus * 2)) / 100;
+                        var dispelChance = bc.ScaleDispelChance(
+                            (50.0 + 100 * (Caster.Skills.Magery.Value - bc.DispelDifficulty) / (bc.DispelFocus * 2)) / 100
+                        );
 
                         if (dispelChance > Utility.RandomDouble())
                         {

@@ -433,5 +433,30 @@ public class DefCooking : CraftSystem
         }
 
         /* End Chocolatiering */
+
+        /* Begin Beverages */
+        index = AddCraft(typeof(SpringTonic), "Beverages", "spring tonic", 20.0, 70.0, typeof(JarHoney), 1044472, 1, 1044253);
+        AddRes(index, typeof(BaseBeverage), 1046458, 1, 1044253);
+
+        index = AddCraft(typeof(FruitJuice), "Beverages", "fruit juice", 30.0, 80.0, typeof(Apple), "Apples", 3, 1044253);
+        AddRes(index, typeof(BaseBeverage), 1046458, 1, 1044253);
+
+        index = AddCraft(typeof(HerbalTea), "Beverages", "herbal tea", 40.0, 90.0, typeof(Ginseng), 1044356, 2, 1044253);
+        AddRes(index, typeof(BaseBeverage), 1046458, 1, 1044253);
+        SetNeedHeat(index, true);
+
+        index = AddCraft(typeof(HeartyAle), "Beverages", "hearty ale", 50.0, 100.0, typeof(WheatSheaf), 1044489, 2, 1044253);
+        AddRes(index, typeof(BaseBeverage), "Ale", 1, 1044253);
+        SetBeverageType(index, BeverageType.Ale);
+
+        index = AddCraft(typeof(SpicedWine), "Beverages", "spiced wine", 60.0, 110.0, typeof(Grapes), "Grapes", 2, 1044253);
+        AddRes(index, typeof(BaseBeverage), "Wine", 1, 1044253);
+        SetBeverageType(index, BeverageType.Wine);
+        SetNeedHeat(index, true);
+
+        index = AddCraft(typeof(DwarvenLiquor), "Beverages", "dwarven liquor", 70.0, 120.0, typeof(Garlic), 1044355, 3, 1044253);
+        AddRes(index, typeof(BaseBeverage), "Liquor", 1, 1044253);
+        SetBeverageType(index, BeverageType.Liquor);
+        /* End Beverages */
     }
 }
