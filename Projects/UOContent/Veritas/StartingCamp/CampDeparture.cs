@@ -101,7 +101,7 @@ public static class CampDeparture
 
     internal static void Depart(PlayerMobile pm, CityInfo city)
     {
-        pm.CloseGump<TownPickerGump>();
+        pm.CloseGump<TarotGump>();
 
         pm.Combatant = null;
         pm.Warmode = false;

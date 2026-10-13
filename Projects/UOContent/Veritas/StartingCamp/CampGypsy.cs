@@ -57,6 +57,6 @@ public partial class CampGypsy : BaseQuester
         }
 
         PlaySound(778);
-        TownPickerGump.DisplayTo(player, this);
+        TarotGump.DisplayTo(player, this);
     }
 }
