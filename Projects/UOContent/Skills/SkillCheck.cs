@@ -124,12 +124,18 @@ public static class SkillCheck
             }
             else if (AllowGain(from, skill, amObj))
             {
+                // NPC guild members gain faster in their guild's skills via a smaller divisor.
+                // It applies twice, so the cap terms benefit more than the difficulty term.
+                var gainDivisor = from is PlayerMobile pm && NpcGuildBenefits.IsGuildSkill(pm.NpcGuild, skill.SkillName)
+                    ? NpcGuildBenefits.RollGuildGainDivisor()
+                    : 2.0;
+
                 var gc = (double)(from.Skills.Cap - from.Skills.Total) / from.Skills.Cap;
                 gc += (skill.Cap - skill.Base) / skill.Cap;
-                gc /= 2;
+                gc /= gainDivisor;
 
                 gc += (1.0 - chance) * (success ? 0.5 : Core.AOS ? 0.0 : 0.2);
-                gc /= 2;
+                gc /= gainDivisor;
 
                 gc *= skill.Info.GainFactor;
                 gc *= AvatarEngine.GetSkillGainMultiplier(from);

@@ -85,14 +85,15 @@
     "name": "Spawner (504)",
     "location": [691, 1264, 47],
     "map": "Tokuno",
-    "count": 1,
+    "count": 2,
     "minDelay": "00:05:00",
     "maxDelay": "00:10:00",
     "team": 0,
     "homeRange": 0,
     "walkingRange": 4,
     "entries": [
-      { "name": "Mapmaker", "maxCount": 1, "probability": 100 }
+      { "name": "Mapmaker", "maxCount": 1, "probability": 100 },
+      { "name": "CartographerGuildmaster", "maxCount": 1, "probability": 100 }
     ]
   },
   {
@@ -602,7 +603,7 @@
     "name": "Spawner (504)",
     "location": [703, 1262, 25],
     "map": "Tokuno",
-    "count": 3,
+    "count": 4,
     "minDelay": "00:05:00",
     "maxDelay": "00:10:00",
     "team": 0,
@@ -611,7 +612,8 @@
     "entries": [
       { "name": "Baker", "maxCount": 1, "probability": 100 },
       { "name": "Butcher", "maxCount": 1, "probability": 100 },
-      { "name": "Cook", "maxCount": 1, "probability": 100 }
+      { "name": "Cook", "maxCount": 1, "probability": 100 },
+      { "name": "CulinaryGuildmaster", "maxCount": 1, "probability": 100 }
     ]
   },
   {
@@ -652,14 +654,15 @@
     "name": "Spawner (504)",
     "location": [806, 1308, 25],
     "map": "Tokuno",
-    "count": 1,
+    "count": 2,
     "minDelay": "00:05:00",
     "maxDelay": "00:10:00",
     "team": 0,
     "homeRange": 0,
     "walkingRange": 4,
     "entries": [
-      { "name": "Weaponsmith", "maxCount": 1, "probability": 100 }
+      { "name": "Weaponsmith", "maxCount": 1, "probability": 100 },
+      { "name": "AssassinGuildmaster", "maxCount": 1, "probability": 100 }
     ]
   },
   {

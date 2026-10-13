@@ -72,7 +72,7 @@
     "name": "Spawner (405)",
     "location": [2023, 1379, -80],
     "map": "Malas",
-    "count": 3,
+    "count": 4,
     "minDelay": "00:05:00",
     "maxDelay": "00:10:00",
     "team": 0,
@@ -81,7 +81,8 @@
     "entries": [
       { "name": "Mage", "maxCount": 1, "probability": 100 },
       { "name": "Alchemist", "maxCount": 1, "probability": 100 },
-      { "name": "MageGuildmaster", "maxCount": 1, "probability": 100 }
+      { "name": "MageGuildmaster", "maxCount": 1, "probability": 100 },
+      { "name": "NecromancerGuildmaster", "maxCount": 1, "probability": 100 }
     ]
   },
   {
@@ -308,7 +309,7 @@
     "name": "Spawner (405)",
     "location": [1004, 527, -50],
     "map": "Malas",
-    "count": 4,
+    "count": 5,
     "minDelay": "00:05:00",
     "maxDelay": "00:10:00",
     "team": 0,
@@ -318,7 +319,8 @@
       { "name": "HolyMage", "maxCount": 1, "probability": 100 },
       { "name": "Herbalist", "maxCount": 1, "probability": 100 },
       { "name": "Alchemist", "maxCount": 1, "probability": 100 },
-      { "name": "CustomHairstylist", "maxCount": 1, "probability": 100 }
+      { "name": "CustomHairstylist", "maxCount": 1, "probability": 100 },
+      { "name": "DruidGuildmaster", "maxCount": 1, "probability": 100 }
     ]
   },
   {

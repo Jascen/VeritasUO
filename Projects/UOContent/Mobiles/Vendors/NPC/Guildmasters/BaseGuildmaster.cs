@@ -20,6 +20,8 @@ namespace Server.Mobiles
 
         public virtual int JoinCost => 500;
 
+        public virtual int RingReplacementCost => 400;
+
         public virtual TimeSpan JoinAge => TimeSpan.FromDays(0.0);
         public virtual TimeSpan JoinGameAge => TimeSpan.FromDays(2.0);
         public virtual TimeSpan QuitAge => TimeSpan.FromDays(7.0);
@@ -33,7 +35,15 @@ namespace Server.Mobiles
 
         public virtual void SayGuildTo(Mobile m)
         {
-            SayTo(m, 1008055 + (int)NpcGuild);
+            // Localized guild names only exist for the original guilds.
+            if (NpcGuild <= NpcGuild.BlacksmithsGuild)
+            {
+                SayTo(m, 1008055 + (int)NpcGuild);
+            }
+            else
+            {
+                SayTo(m, NpcGuildBenefits.GetName(NpcGuild));
+            }
         }
 
         public virtual void SayWelcomeTo(Mobile m)
@@ -118,6 +128,7 @@ namespace Server.Mobiles
                     {
                         SayTo(pm, 501054); // I accept thy resignation.
                         pm.NpcGuild = NpcGuild.None;
+                        RemoveGuildRings(pm);
                     }
 
                     e.Handled = true;
@@ -129,6 +140,14 @@ namespace Server.Mobiles
 
         public override bool OnGoldGiven(Mobile from, Gold dropped)
         {
+            if (from is PlayerMobile member && member.NpcGuild == NpcGuild && dropped.Amount == RingReplacementCost)
+            {
+                Say("Here is your replacement ring.");
+                member.AddToBackpack(new GuildRing(NpcGuild, member));
+                dropped.Delete();
+                return true;
+            }
+
             if (from is PlayerMobile pm && dropped.Amount == JoinCost)
             {
                 if (pm.NpcGuild == NpcGuild)
@@ -151,6 +170,9 @@ namespace Server.Mobiles
                     pm.NpcGuildJoinTime = Core.Now;
                     pm.NpcGuildGameTime = pm.GameTime;
 
+                    pm.AddToBackpack(new GuildRing(NpcGuild, pm));
+                    pm.SendSound(0x3D);
+
                     dropped.Delete();
                     return true;
                 }
@@ -159,6 +181,27 @@ namespace Server.Mobiles
             }
 
             return base.OnGoldGiven(from, dropped);
+        }
+
+        // Rings left elsewhere (bank, house) stay behind but can no longer be equipped.
+        private static void RemoveGuildRings(PlayerMobile pm)
+        {
+            if (pm.FindItemOnLayer(Layer.Ring) is GuildRing worn && worn.Owner == pm)
+            {
+                worn.Delete();
+            }
+
+            var pack = pm.Backpack;
+            if (pack == null)
+            {
+                return;
+            }
+
+            using var queue = pack.EnumerateItemsByType<GuildRing>(predicate: ring => ring.Owner == pm);
+            while (queue.Count > 0)
+            {
+                queue.Dequeue().Delete();
+            }
         }
     }
 }
