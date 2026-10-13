@@ -1,3 +1,5 @@
+using System;
+using Server.Engines.Avatar;
 using Server.Mobiles;
 
 namespace Server.Veritas.StartingCamp;
@@ -22,4 +24,23 @@ public static class AvatarHooks
     //TODO(avatar): Memento ran [avatar-enable here instead of leaving the camp. Return true when the draw was handled and
     // the player should stay; return false to depart to the card's (random) city.
     public static bool OnCardDrawn(PlayerMobile pm, TarotCard card) => false;
+
+    // Memento asked for confirmation before an Avatar without a template entered the land.
+    public static void BeforeDeparture(PlayerMobile pm, Action onContinue)
+    {
+        if (!pm.Avatar.Active || pm.Avatar.SelectedTemplate != AvatarStarterTemplates.None)
+        {
+            onContinue();
+            return;
+        }
+
+        AvatarConfirm.Send(
+            pm,
+            "No template selected",
+            "You have not selected a template yet. Are you sure you want to enter the land?",
+            onContinue
+        );
+    }
+
+    public static void OnDeparting(PlayerMobile pm) => AvatarEngine.GrantStartingItems(pm);
 }

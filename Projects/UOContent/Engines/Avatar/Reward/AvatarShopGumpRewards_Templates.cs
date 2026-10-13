@@ -30,7 +30,7 @@ public static partial class RewardFactory
             AvatarConfirm.Send(
                 from,
                 "Select Template?",
-                $"Are you sure you wish to select this template? This is a <BASEFONT COLOR={AvatarConfirm.Red}>destructive action</BASEFONT> that will recreate your backpack, reduce existing stats, and change skills.",
+                $"Are you sure you wish to select this template? This is a <BASEFONT COLOR={AvatarConfirm.Red}>destructive action</BASEFONT> that will reduce existing stats and change skills. The template's starting items are given when you leave the camp.",
                 () =>
                 {
                     AvatarEngine.DisableSkillGains = true;
@@ -68,8 +68,6 @@ public static partial class RewardFactory
                     }
 
                     AvatarEngine.ApplyContext(from, from.Avatar);
-                    AvatarEngine.RecreateBackpack(from);
-                    context.ApplyTemplate(from, context.SelectedTemplate);
                     from.SendMessage("Your skills have been set to the chosen template.");
                 }
             );
