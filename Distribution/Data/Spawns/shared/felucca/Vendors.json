@@ -829,7 +829,7 @@
     "name": "Spawner (225)",
     "location": [602, 2180, 0],
     "map": "Felucca",
-    "count": 3,
+    "count": 4,
     "minDelay": "00:05:00",
     "maxDelay": "00:10:00",
     "team": 0,
@@ -838,7 +838,8 @@
     "entries": [
       { "name": "Mage", "maxCount": 1, "probability": 100 },
       { "name": "Alchemist", "maxCount": 1, "probability": 100 },
-      { "name": "MageGuildmaster", "maxCount": 1, "probability": 100 }
+      { "name": "MageGuildmaster", "maxCount": 1, "probability": 100 },
+      { "name": "NecromancerGuildmaster", "maxCount": 1, "probability": 100 }
     ]
   },
   {
@@ -1505,14 +1506,15 @@
     "name": "Spawner (225)",
     "location": [2659, 2194, 4],
     "map": "Felucca",
-    "count": 1,
+    "count": 2,
     "minDelay": "00:05:00",
     "maxDelay": "00:10:00",
     "team": 0,
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "ThiefGuildmaster", "maxCount": 1, "probability": 100 }
+      { "name": "ThiefGuildmaster", "maxCount": 1, "probability": 100 },
+      { "name": "AssassinGuildmaster", "maxCount": 1, "probability": 100 }
     ]
   },
   {
@@ -2314,7 +2316,7 @@
     "name": "Spawner (225)",
     "location": [4409, 1111, 0],
     "map": "Felucca",
-    "count": 3,
+    "count": 4,
     "minDelay": "00:05:00",
     "maxDelay": "00:10:00",
     "team": 0,
@@ -2323,7 +2325,8 @@
     "entries": [
       { "name": "Herbalist", "maxCount": 1, "probability": 100 },
       { "name": "Alchemist", "maxCount": 1, "probability": 100 },
-      { "name": "CustomHairstylist", "maxCount": 1, "probability": 100 }
+      { "name": "CustomHairstylist", "maxCount": 1, "probability": 100 },
+      { "name": "AlchemistGuildmaster", "maxCount": 1, "probability": 100 }
     ]
   },
   {
@@ -5139,14 +5142,15 @@
     "name": "Spawner (225)",
     "location": [624, 1145, 0],
     "map": "Felucca",
-    "count": 1,
+    "count": 2,
     "minDelay": "00:05:00",
     "maxDelay": "00:10:00",
     "team": 0,
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Bowyer", "maxCount": 1, "probability": 100 }
+      { "name": "Bowyer", "maxCount": 1, "probability": 100 },
+      { "name": "ArcherGuildmaster", "maxCount": 1, "probability": 100 }
     ]
   },
   {
@@ -5171,7 +5175,7 @@
     "name": "Spawner (225)",
     "location": [2513, 477, 15],
     "map": "Felucca",
-    "count": 2,
+    "count": 3,
     "minDelay": "00:05:00",
     "maxDelay": "00:10:00",
     "team": 0,
@@ -5179,7 +5183,8 @@
     "walkingRange": 5,
     "entries": [
       { "name": "Carpenter", "maxCount": 1, "probability": 100 },
-      { "name": "RealEstateBroker", "maxCount": 1, "probability": 100 }
+      { "name": "RealEstateBroker", "maxCount": 1, "probability": 100 },
+      { "name": "CarpenterGuildmaster", "maxCount": 1, "probability": 100 }
     ]
   },
   {

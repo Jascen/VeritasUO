@@ -22,14 +22,15 @@
     "name": "Spawner (312)",
     "location": [868, 657, -40],
     "map": "Ilshenar",
-    "count": 1,
+    "count": 2,
     "minDelay": "00:05:00",
     "maxDelay": "00:10:00",
     "team": 0,
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Scribe", "maxCount": 1, "probability": 100 }
+      { "name": "Scribe", "maxCount": 1, "probability": 100 },
+      { "name": "LibrarianGuildmaster", "maxCount": 1, "probability": 100 }
     ]
   },
   {

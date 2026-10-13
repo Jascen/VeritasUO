@@ -80,7 +80,16 @@ namespace Server.Mobiles
         TailorsGuild,
         FishermensGuild,
         BardsGuild,
-        BlacksmithsGuild
+        BlacksmithsGuild,
+        NecromancersGuild,
+        AlchemistsGuild,
+        DruidsGuild,
+        ArchersGuild,
+        CarpentersGuild,
+        CartographersGuild,
+        LibrariansGuild,
+        CulinariansGuild,
+        AssassinsGuild
     }
 
     public enum SolenFriendship
