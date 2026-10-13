@@ -208,6 +208,19 @@ public class LootAffixTests : IDisposable
         Assert.Equal(original.Prefixes, loaded.Prefixes);
         Assert.Equal(original.Suffixes, loaded.Suffixes);
         Assert.Equal(original.RareName, loaded.RareName);
+        Assert.Equal(ItemLevel.Max, loaded.ItemLevel);
+    }
+
+    [Theory]
+    [InlineData(ItemLevel.Min)]
+    [InlineData(37)]
+    [InlineData(ItemLevel.Max)]
+    public void Apply_RecordsItemLevel(int ilvl)
+    {
+        var item = Create("melee");
+        Assert.True(LootAffixGenerator.Apply(item, ilvl, 0.0));
+
+        Assert.Equal(ilvl, ((ILootAffixItem)item).LootAffixes.ItemLevel);
     }
 
     [Fact]

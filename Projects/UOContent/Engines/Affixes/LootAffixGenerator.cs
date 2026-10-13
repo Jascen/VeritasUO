@@ -103,7 +103,8 @@ public static class LootAffixGenerator
             prefixes[..prefixCount].ToArray(),
             suffixes[..suffixCount].ToArray(),
             rareName1,
-            rareName2
+            rareName2,
+            ilvl
         );
 
         if (item is BaseWeapon weapon && state.ChangedElement)
