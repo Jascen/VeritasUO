@@ -4,6 +4,7 @@ using Server;
 using Server.Engines.Avatar;
 using Server.Items;
 using Server.Mobiles;
+using Server.Veritas.StartingCamp;
 using Xunit;
 
 namespace UOContent.Tests;
@@ -123,7 +124,7 @@ public class AvatarSystemTests
         Assert.NotNull(player.Backpack.FindItemByType<AvatarBook>());
         Assert.Equal(0, player.Skills[SkillName.Swords].BaseFixedPoint);
         Assert.Equal(Constants.BASE_STAT_CAP + 5, player.StatCap);
-        Assert.Equal(AvatarSanctuary.RespawnLocation, player.Location);
+        Assert.Equal(GypsyCamp.Arrival, player.Location);
 
         Cleanup(player);
     }
