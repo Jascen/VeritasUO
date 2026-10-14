@@ -121,9 +121,10 @@ public static class LootAffixGenerator
         BaseWeapon => AffixItemMask.Melee,
         BaseShield => AffixItemMask.Shield,
         BaseArmor  => AffixItemMask.Armor,
-        BaseHat    => AffixItemMask.Hat,
-        BaseJewel  => AffixItemMask.Jewelry,
-        _          => AffixItemMask.None
+        BaseHat      => AffixItemMask.Hat,
+        BaseClothing => AffixItemMask.Clothing,
+        BaseJewel    => AffixItemMask.Jewelry,
+        _            => AffixItemMask.None
     };
 
     /// <summary>
@@ -299,9 +300,8 @@ public static class LootAffixGenerator
         {
             case AffixStatKind.Attribute:
                 {
-                    // Elves see in the dark; elf-only armor never rolls night sight.
-                    return mod.Stat != (int)AosAttribute.NightSight ||
-                           item is not BaseArmor armor || armor.RequiredRaces != Race.AllowElvesOnly;
+                    // Elves see in the dark; elf-only gear never rolls night sight.
+                    return mod.Stat != (int)AosAttribute.NightSight || item.RequiredRaces != Race.AllowElvesOnly;
                 }
             case AffixStatKind.WeaponAttribute:
                 {

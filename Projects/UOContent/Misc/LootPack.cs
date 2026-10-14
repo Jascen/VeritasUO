@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Server.Engines.Affixes;
 using Server.Items;
 using Server.Mobiles;
@@ -164,7 +165,8 @@ namespace Server
             new LootPackItem(typeof(BaseRanged), 53),
             new LootPackItem(typeof(BaseArmor), 303),
             new LootPackItem(typeof(BaseShield), 39),
-            new LootPackItem(typeof(BaseJewel), 158)
+            new LootPackItem(typeof(BaseJewel), 158),
+            new LootPackItem(typeof(BaseClothing), 79)
         ];
 
         public static readonly LootPack MlRich = new(
@@ -183,7 +185,8 @@ namespace Server
             new LootPackItem(typeof(BaseRanged), 1),
             new LootPackItem(typeof(BaseArmor), 4),
             new LootPackItem(typeof(BaseShield), 1),
-            new LootPackItem(typeof(BaseJewel), 2)
+            new LootPackItem(typeof(BaseJewel), 2),
+            new LootPackItem(typeof(BaseClothing), 1)
         ];
 
         public static readonly LootPackItem[] AosMagicItemsMeagerType1 =
@@ -192,7 +195,8 @@ namespace Server
             new LootPackItem(typeof(BaseRanged), 14),
             new LootPackItem(typeof(BaseArmor), 81),
             new LootPackItem(typeof(BaseShield), 11),
-            new LootPackItem(typeof(BaseJewel), 42)
+            new LootPackItem(typeof(BaseJewel), 42),
+            new LootPackItem(typeof(BaseClothing), 21)
         ];
 
         public static readonly LootPackItem[] AosMagicItemsMeagerType2 =
@@ -201,7 +205,8 @@ namespace Server
             new LootPackItem(typeof(BaseRanged), 7),
             new LootPackItem(typeof(BaseArmor), 40),
             new LootPackItem(typeof(BaseShield), 5),
-            new LootPackItem(typeof(BaseJewel), 21)
+            new LootPackItem(typeof(BaseJewel), 21),
+            new LootPackItem(typeof(BaseClothing), 11)
         ];
 
         public static readonly LootPackItem[] AosMagicItemsAverageType1 =
@@ -210,7 +215,8 @@ namespace Server
             new LootPackItem(typeof(BaseRanged), 23),
             new LootPackItem(typeof(BaseArmor), 130),
             new LootPackItem(typeof(BaseShield), 17),
-            new LootPackItem(typeof(BaseJewel), 68)
+            new LootPackItem(typeof(BaseJewel), 68),
+            new LootPackItem(typeof(BaseClothing), 34)
         ];
 
         public static readonly LootPackItem[] AosMagicItemsAverageType2 =
@@ -219,7 +225,8 @@ namespace Server
             new LootPackItem(typeof(BaseRanged), 13),
             new LootPackItem(typeof(BaseArmor), 77),
             new LootPackItem(typeof(BaseShield), 10),
-            new LootPackItem(typeof(BaseJewel), 40)
+            new LootPackItem(typeof(BaseJewel), 40),
+            new LootPackItem(typeof(BaseClothing), 20)
         ];
 
         public static readonly LootPackItem[] AosMagicItemsRichType2 =
@@ -228,7 +235,8 @@ namespace Server
             new LootPackItem(typeof(BaseRanged), 43),
             new LootPackItem(typeof(BaseArmor), 245),
             new LootPackItem(typeof(BaseShield), 32),
-            new LootPackItem(typeof(BaseJewel), 128)
+            new LootPackItem(typeof(BaseJewel), 128),
+            new LootPackItem(typeof(BaseClothing), 64)
         ];
 
         public static readonly LootPackItem[] AosMagicItemsFilthyRichType1 =
@@ -237,7 +245,8 @@ namespace Server
             new LootPackItem(typeof(BaseRanged), 55),
             new LootPackItem(typeof(BaseArmor), 315),
             new LootPackItem(typeof(BaseShield), 41),
-            new LootPackItem(typeof(BaseJewel), 164)
+            new LootPackItem(typeof(BaseJewel), 164),
+            new LootPackItem(typeof(BaseClothing), 82)
         ];
 
         public static readonly LootPackItem[] AosMagicItemsFilthyRichType2 =
@@ -246,7 +255,8 @@ namespace Server
             new LootPackItem(typeof(BaseRanged), 60),
             new LootPackItem(typeof(BaseArmor), 343),
             new LootPackItem(typeof(BaseShield), 90),
-            new LootPackItem(typeof(BaseJewel), 45)
+            new LootPackItem(typeof(BaseJewel), 45),
+            new LootPackItem(typeof(BaseClothing), 23)
         ];
 
         public static readonly LootPackItem[] AosMagicItemsUltraRich =
@@ -255,7 +265,8 @@ namespace Server
             new LootPackItem(typeof(BaseRanged), 69),
             new LootPackItem(typeof(BaseArmor), 397),
             new LootPackItem(typeof(BaseShield), 52),
-            new LootPackItem(typeof(BaseJewel), 207)
+            new LootPackItem(typeof(BaseJewel), 207),
+            new LootPackItem(typeof(BaseClothing), 104)
         ];
 
         public static readonly LootPack SePoor = new(
@@ -700,7 +711,7 @@ namespace Server
                 return new FireHorn();
             }
 
-            if (item is BaseWeapon or BaseArmor or BaseJewel or BaseHat)
+            if (item is BaseWeapon or BaseArmor or BaseJewel or BaseClothing)
             {
                 if (Core.AOS)
                 {
@@ -888,6 +899,43 @@ namespace Server
                 : [typeof(VengefulSpiritScroll), typeof(VampiricEmbraceScroll)]
         ];
 
+        // Hats already drop through the armor slot (Loot.RandomArmorOrHat).
+        private static readonly Type[] _aosClothingTypes = WithoutHats(Loot.AosClothingTypes, Loot.ClothingTypes);
+
+        private static readonly Type[] _seClothingTypes =
+            WithoutHats(Loot.SEClothingTypes, Loot.AosClothingTypes, Loot.ClothingTypes);
+
+        private static readonly Type[] _mlClothingTypes =
+            WithoutHats(Loot.MLClothingTypes, Loot.AosClothingTypes, Loot.ClothingTypes);
+
+        private static Type[] WithoutHats(params Type[][] sources)
+        {
+            var list = new List<Type>();
+
+            foreach (var types in sources)
+            {
+                foreach (var type in types)
+                {
+                    if (!type.IsSubclassOf(typeof(BaseHat)) && !list.Contains(type))
+                    {
+                        list.Add(type);
+                    }
+                }
+            }
+
+            return list.ToArray();
+        }
+
+        private static Type[] GetClothingTypes(bool inTokuno, bool isMondain)
+        {
+            if (Core.ML && isMondain)
+            {
+                return _mlClothingTypes;
+            }
+
+            return Core.SE && inTokuno ? _seClothingTypes : _aosClothingTypes;
+        }
+
         public LootPackItem(Type type, int chance)
         {
             Type = type;
@@ -962,6 +1010,11 @@ namespace Server
                 if (Type == typeof(BaseJewel))
                 {
                     return Core.AOS ? Loot.RandomJewelry() : Loot.RandomArmorOrShieldOrWeapon();
+                }
+
+                if (Type == typeof(BaseClothing))
+                {
+                    return Core.AOS ? Loot.Construct(GetClothingTypes(inTokuno, isMondain)) : Loot.RandomArmorOrShieldOrWeapon();
                 }
 
                 if (Type == typeof(BaseInstrument))

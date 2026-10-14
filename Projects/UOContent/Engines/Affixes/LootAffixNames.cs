@@ -50,6 +50,12 @@ public static class LootAffixNames
         "Turn", "Whorl", "Clasp", "Gaze", "Bond", "Charm"
     ];
 
+    private static readonly string[] _clothing =
+    [
+        "Garb", "Robe", "Raiment", "Vestment", "Shroud", "Drape", "Shawl", "Weave", "Sash", "Tatters",
+        "Threads", "Wrap"
+    ];
+
     public static byte RandomFirst() => (byte)Utility.Random(_first.Length);
 
     public static byte RandomSecond(AffixItemMask mask) => (byte)Utility.Random(GetSecondList(mask).Length);
@@ -68,7 +74,8 @@ public static class LootAffixNames
         AffixItemMask.Armor   => _armor,
         AffixItemMask.Shield  => _shield,
         AffixItemMask.Hat     => _hat,
-        AffixItemMask.Jewelry => _jewelry,
-        _                     => _melee
+        AffixItemMask.Jewelry  => _jewelry,
+        AffixItemMask.Clothing => _clothing,
+        _                      => _melee
     };
 }
