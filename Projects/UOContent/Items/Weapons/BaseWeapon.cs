@@ -400,7 +400,16 @@ public abstract partial class BaseWeapon
     [CommandProperty(AccessLevel.GameMaster)]
     public int StrRequirement
     {
-        get => _strRequirement == -1 ? Core.AOS ? AosStrengthReq : OldStrengthReq : _strRequirement;
+        get
+        {
+            if (_strRequirement != -1)
+            {
+                return _strRequirement;
+            }
+
+            var req = Core.AOS ? AosStrengthReq : OldStrengthReq;
+            return _quality == WeaponQuality.Low ? LowQualityLoot.ReduceStrRequirement(req) : req;
+        }
         set
         {
             _strRequirement = value;
@@ -961,7 +970,12 @@ public abstract partial class BaseWeapon
             bonus += WeaponAttributes.DurabilityBonus + (resInfo?.AttributeInfo?.WeaponDurability ?? 0);
         }
 
-        return _quality == WeaponQuality.Exceptional ? bonus + 20 : bonus;
+        return _quality switch
+        {
+            WeaponQuality.Exceptional => bonus + 20,
+            WeaponQuality.Low         => bonus - LowQualityLoot.DurabilityPenalty,
+            _                         => bonus
+        };
     }
 
     public int GetLowerStatReq()
@@ -3012,6 +3026,10 @@ public abstract partial class BaseWeapon
         {
             list.Add(1060636); // exceptional
         }
+        else if (_quality == WeaponQuality.Low)
+        {
+            list.Add($"{"low quality"}");
+        }
 
         if (RequiredRaces == Race.AllowElvesOnly)
         {
@@ -3382,7 +3400,24 @@ public abstract partial class BaseWeapon
 
         if (Crafter == null)
         {
-            LabelTo(from, Quality == WeaponQuality.Exceptional ? $"{name} of exceptional quality" : name);
+            switch (Quality)
+            {
+                case WeaponQuality.Exceptional:
+                    {
+                        LabelTo(from, $"{name} of exceptional quality");
+                        break;
+                    }
+                case WeaponQuality.Low:
+                    {
+                        LabelTo(from, $"{name} of low quality");
+                        break;
+                    }
+                default:
+                    {
+                        LabelTo(from, name);
+                        break;
+                    }
+            }
             return;
         }
 

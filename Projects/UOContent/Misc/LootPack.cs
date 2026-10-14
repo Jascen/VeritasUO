@@ -715,6 +715,7 @@ namespace Server
             {
                 if (Core.AOS)
                 {
+                    LowQualityLoot.TryApply(item, from);
                     LootAffixGenerator.Apply(item, from, luckChance, MinIntensity, MaxIntensity);
                 }
                 else // not aos
