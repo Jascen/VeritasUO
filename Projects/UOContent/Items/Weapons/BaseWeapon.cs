@@ -1645,9 +1645,51 @@ public abstract partial class BaseWeapon
             {
                 armor.OnHit(this, damage); // call OnHit to lose durability
             }
+
+            WearAccessories(defender, positionChance, armorItem);
         }
 
         return damage;
+    }
+
+    private static readonly Layer[] _chestOverLayers = [Layer.OuterTorso, Layer.MiddleTorso, Layer.Cloak];
+    private static readonly Layer[] _legsOverLayers = [Layer.OuterLegs, Layer.Waist, Layer.Shoes];
+    private static readonly Layer[] _jewelLayers = [Layer.Ring, Layer.Bracelet, Layer.Neck, Layer.Earrings];
+
+    // Hit location only picks one item per layer group; items worn over that location
+    // and jewelry (which has no hit location) take wear here instead.
+    private void WearAccessories(Mobile defender, double positionChance, Item armorItem)
+    {
+        var overLayers = positionChance switch
+        {
+            >= 0.65 => _chestOverLayers,
+            >= 0.43 => _legsOverLayers,
+            _       => null
+        };
+
+        if (overLayers != null)
+        {
+            for (var i = 0; i < overLayers.Length; i++)
+            {
+                if (defender.FindItemOnLayer(overLayers[i]) is IWearableDurability worn)
+                {
+                    worn.OnHit(this, 0);
+                }
+            }
+        }
+
+        BaseJewel jewel = null;
+        var count = 0;
+
+        for (var i = 0; i < _jewelLayers.Length; i++)
+        {
+            if (defender.FindItemOnLayer(_jewelLayers[i]) is BaseJewel j && j != armorItem && Utility.Random(++count) == 0)
+            {
+                jewel = j;
+            }
+        }
+
+        jewel?.OnHit(this, 0);
     }
 
     public virtual int AbsorbDamage(Mobile attacker, Mobile defender, int damage)
@@ -1678,6 +1720,8 @@ public abstract partial class BaseWeapon
         {
             damage = armor.OnHit(this, damage);
         }
+
+        WearAccessories(defender, chance, armorItem);
 
         var virtualArmor = defender.VirtualArmor + defender.VirtualArmorMod;
 
