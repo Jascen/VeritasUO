@@ -20,7 +20,7 @@ public enum GemType
 }
 
 [SerializationGenerator(6, false)]
-public abstract partial class BaseJewel : Item, ICraftable, IAosItem, ILootAffixItem
+public abstract partial class BaseJewel : Item, ICraftable, IWearableDurability, IAosItem, ILootAffixItem
 {
     [EncodedInt]
     [InvalidateProperties]
@@ -119,8 +119,58 @@ public abstract partial class BaseJewel : Item, ICraftable, IAosItem, ILootAffix
     public override int EnergyResistance => Resistances.Energy;
     public virtual int BaseGemTypeNumber => 0;
 
-    public virtual int InitMinHits => 0;
-    public virtual int InitMaxHits => 0;
+    public virtual int InitMinHits => ArtifactRarity > 0 ? 255 : 20;
+    public virtual int InitMaxHits => ArtifactRarity > 0 ? 255 : 30;
+
+    public virtual bool CanFortify => true;
+
+    // Jewelry has no durability bonus attribute, so there is nothing to scale.
+    public void ScaleDurability()
+    {
+    }
+
+    public void UnscaleDurability()
+    {
+    }
+
+    // Jewelry absorbs no damage; it only takes wear.
+    public virtual int OnHit(BaseWeapon weapon, int damageTaken)
+    {
+        if (_maxHitPoints <= 0 || Utility.Random(100) >= 25)
+        {
+            return damageTaken;
+        }
+
+        var wear = weapon.Type == WeaponType.Bashing ? Utility.RandomMinMax(1, 4) / 2 : Utility.Random(2);
+
+        if (wear <= 0)
+        {
+            return damageTaken;
+        }
+
+        if (_hitPoints >= wear)
+        {
+            HitPoints -= wear;
+            return damageTaken;
+        }
+
+        wear -= _hitPoints;
+        HitPoints = 0;
+
+        if (_maxHitPoints > wear)
+        {
+            MaxHitPoints -= wear;
+
+            // Your equipment is severely damaged.
+            (Parent as Mobile)?.LocalOverheadMessage(MessageType.Regular, 0x3B2, 1061121);
+        }
+        else
+        {
+            Delete();
+        }
+
+        return damageTaken;
+    }
 
     public override int LabelNumber
     {
@@ -457,6 +507,11 @@ public abstract partial class BaseJewel : Item, ICraftable, IAosItem, ILootAffix
     [AfterDeserialization]
     private void AfterDeserialization()
     {
+        if (_maxHitPoints == 0 && _hitPoints == 0)
+        {
+            _hitPoints = _maxHitPoints = Utility.RandomMinMax(InitMinHits, InitMaxHits);
+        }
+
         var m = Parent as Mobile;
 
         if (Core.AOS && m != null)

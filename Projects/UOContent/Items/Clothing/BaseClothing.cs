@@ -329,8 +329,8 @@ namespace Server.Items
 
         private bool ShouldSerializeHitPoints() => _hitPoints != 0;
 
-        public virtual int InitMinHits => 0;
-        public virtual int InitMaxHits => 0;
+        public virtual int InitMinHits => ArtifactRarity > 0 ? 255 : 20;
+        public virtual int InitMaxHits => ArtifactRarity > 0 ? 255 : 30;
 
         public virtual int OnHit(BaseWeapon weapon, int damageTaken)
         {

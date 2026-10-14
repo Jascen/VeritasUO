@@ -448,6 +448,70 @@ namespace Server.Engines.Craft
                         toDelete = true;
                     }
                 }
+                else if (targeted is BaseJewel jewel)
+                {
+                    var skill = m_CraftSystem.MainSkill;
+                    var toWeaken = 0;
+
+                    if (Core.AOS)
+                    {
+                        toWeaken = 1;
+                    }
+                    else if (skill != SkillName.Tinkering)
+                    {
+                        var skillLevel = usingDeed ? m_Deed.SkillLevel : from.Skills[skill].Base;
+
+                        toWeaken = skillLevel switch
+                        {
+                            >= 90.0 => 1,
+                            >= 70.0 => 2,
+                            _       => 3
+                        };
+                    }
+
+                    if (m_CraftSystem.CraftItems.SearchForSubclass(jewel.GetType()) == null)
+                    {
+                        number = usingDeed
+                            ? 1061136
+                            : 1044277; // That item cannot be repaired. // You cannot repair that item with this type of repair contract.
+                    }
+                    else if (!jewel.IsChildOf(from.Backpack) && (!Core.ML || jewel.Parent != from))
+                    {
+                        number = 1044275; // The item must be in your backpack to repair it.
+                    }
+                    else if (jewel.MaxHitPoints <= 0 || jewel.HitPoints == jewel.MaxHitPoints)
+                    {
+                        number = 1044281; // That item is in full repair
+                    }
+                    else if (jewel.MaxHitPoints <= toWeaken)
+                    {
+                        number = 1044278; // That item has been repaired many times, and will break if repairs are attempted again.
+                    }
+                    else
+                    {
+                        if (CheckWeaken(from, skill, jewel.HitPoints, jewel.MaxHitPoints))
+                        {
+                            jewel.MaxHitPoints -= toWeaken;
+                            jewel.HitPoints = Math.Max(0, jewel.HitPoints - toWeaken);
+                        }
+
+                        if (CheckRepairDifficulty(from, skill, jewel.HitPoints, jewel.MaxHitPoints))
+                        {
+                            number = 1044279; // You repair the item.
+                            m_CraftSystem.PlayCraftEffect(from);
+                            jewel.HitPoints = jewel.MaxHitPoints;
+                        }
+                        else
+                        {
+                            number = usingDeed
+                                ? 1061137
+                                : 1044280; // You fail to repair the item. [And the contract is destroyed]
+                            m_CraftSystem.PlayCraftEffect(from);
+                        }
+
+                        toDelete = true;
+                    }
+                }
                 else if (!usingDeed && targeted is BlankScroll scroll)
                 {
                     var skill = m_CraftSystem.MainSkill;
