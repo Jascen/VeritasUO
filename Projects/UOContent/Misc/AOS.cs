@@ -782,7 +782,8 @@ namespace Server
         ResistEnergyBonus = 0x00200000,
         UseBestSkill = 0x00400000,
         MageWeapon = 0x00800000,
-        DurabilityBonus = 0x01000000
+        DurabilityBonus = 0x01000000,
+        Cleave = 0x02000000
     }
 
     public sealed class AosWeaponAttributes : BaseAttributes
@@ -976,6 +977,14 @@ namespace Server
             set => this[AosWeaponAttribute.DurabilityBonus] = value;
         }
 
+        // Flat splash %, not a proc chance, hence no Hit prefix.
+        [CommandProperty(AccessLevel.GameMaster)]
+        public int Cleave
+        {
+            get => this[AosWeaponAttribute.Cleave];
+            set => this[AosWeaponAttribute.Cleave] = value;
+        }
+
         public static int GetValue(Mobile m, AosWeaponAttribute attribute)
         {
             if (!Core.AOS)
@@ -997,6 +1006,11 @@ namespace Server
                     if (attrs != null)
                     {
                         value += attrs[attribute];
+                    }
+
+                    if (attribute == AosWeaponAttribute.Cleave)
+                    {
+                        value += weapon.BaseCleavePercent;
                     }
                 }
                 else if (obj is ElvenGlasses glasses)

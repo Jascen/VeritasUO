@@ -823,6 +823,10 @@ public abstract partial class BaseWeapon
         {
             SpecialMove.ClearCurrentMove(attacker);
         }
+
+        _canCleaveSwing = attacker is PlayerMobile &&
+                          WeaponAbility.GetCurrentAbility(attacker) == null &&
+                          SpecialMove.GetCurrentMove(attacker) == null;
     }
 
     public virtual void GetStatusDamage(Mobile from, out int min, out int max)
@@ -843,6 +847,11 @@ public abstract partial class BaseWeapon
 
     public virtual TimeSpan OnSwing(Mobile attacker, Mobile defender, double damageBonus = 1.0)
     {
+        // Consumed up front so swings started by abilities (Momentum Strike, Double Strike, Counter Attack)
+        // inside this one never see it.
+        var canCleaveSwing = _canCleaveSwing;
+        _canCleaveSwing = false;
+
         var canSwing = true;
 
         if (Core.AOS)
@@ -897,7 +906,9 @@ public abstract partial class BaseWeapon
 
             if (CheckHit(attacker, defender))
             {
+                _canCleaveHit = canCleaveSwing;
                 OnHit(attacker, defender, damageBonus);
+                _canCleaveHit = false;
             }
             else
             {
@@ -1604,6 +1615,7 @@ public abstract partial class BaseWeapon
                     if (defender.Weapon is BaseWeapon weapon)
                     {
                         defender.FixedParticles(0x3779, 1, 15, 0x158B, 0x0, 0x3, EffectLayer.Waist);
+
                         weapon.OnSwing(defender, attacker);
                     }
 
@@ -1785,6 +1797,10 @@ public abstract partial class BaseWeapon
 
     public virtual void OnHit(Mobile attacker, Mobile defender, double damageBonus = 1.0)
     {
+        // Consumed first so hits applied by abilities later in this method (Whirlwind) don't cleave.
+        var canCleave = _canCleaveHit;
+        _canCleaveHit = false;
+
         if (MirrorImage.HasClone(defender) && defender.Skills.Ninjitsu.Value / 150.0 > Utility.RandomDouble())
         {
             foreach (var m in defender.GetMobilesInRange<Clone>(4))
@@ -2201,6 +2217,11 @@ public abstract partial class BaseWeapon
                 if (nrgyChance != 0 && nrgyChance > Utility.Random(100))
                 {
                     DoAreaAttack(attacker, defender, 0x1F1, 120, 0, 0, 0, 0, 100);
+                }
+
+                if (canCleave)
+                {
+                    DoCleave(attacker, defender, damage, phys, fire, cold, pois, nrgy, chaos, direct);
                 }
 
                 var maChance =
@@ -3048,6 +3069,13 @@ public abstract partial class BaseWeapon
 
         WeaponAttributes.GetProperties(list);
 
+        // Built-in base plus any Cleave attribute, so the line reflects what the weapon actually splashes.
+        if ((prop = BaseCleavePercent + WeaponAttributes.Cleave) != 0)
+        {
+            // 1060658 is used by the loot affix Item Level line; same cliloc twice collides in the tooltip.
+            list.Add(1060659, $"{"cleave"}\t{prop}%"); // ~1_val~: ~2_val~
+        }
+
         if (ImmolatingWeaponSpell.IsImmolating(this))
         {
             list.Add(1111917); // Immolated
@@ -3609,6 +3637,88 @@ public abstract partial class BaseWeapon
             from.DoHarmful(m, true);
             m.FixedEffect(0x3779, 1, 15, hue, 0);
             AOS.Damage(m, from, (int)damage, phys, fire, cold, pois, nrgy);
+        }
+    }
+
+    /// <summary>
+    /// Built-in cleave every melee weapon has before any Cleave attribute.
+    /// </summary>
+    public int BaseCleavePercent => this is BaseRanged ? 0 : Layer == Layer.OneHanded ? 20 : 50;
+
+    // Cleave only applies to a player's basic attack. The combat loop is the only caller of OnBeforeSwing,
+    // which tags the swing; abilities that strike extra targets call OnSwing/OnHit directly and are never tagged.
+    // OnSwing hands the tag to OnHit through _canCleaveHit because OnHit is overridden too widely to add a parameter.
+    // Both are cleared on entry, so a tag can't outlive the swing that set it.
+    private static bool _canCleaveSwing;
+    private static bool _canCleaveHit;
+
+    /// <summary>
+    /// Percent of a landed melee hit's damage splashed onto the targets flanking the defender.
+    /// </summary>
+    protected virtual int GetCleavePercent(Mobile attacker)
+    {
+        if (attacker is BaseCreature)
+        {
+            // Kept separate from the attribute read: creatures normally swing the shared Mobile.DefaultWeapon (Fists),
+            // which carries no attributes, and GetValue only sums equipped items. A creature-side cleave source
+            // (e.g. for bosses) belongs here rather than on a weapon.
+            return 0;
+        }
+
+        return AosWeaponAttributes.GetValue(attacker, AosWeaponAttribute.Cleave);
+    }
+
+    private void DoCleave(
+        Mobile attacker, Mobile defender, int damage, int phys, int fire, int cold,
+        int pois, int nrgy, int chaos, int direct
+    )
+    {
+        if (this is BaseRanged || attacker.Map == null)
+        {
+            return;
+        }
+
+        var percent = GetCleavePercent(attacker);
+        if (percent <= 0)
+        {
+            return;
+        }
+
+        // Frontal arc: the two tiles on either side of the defender, as seen from the attacker.
+        var primaryDir = (int)attacker.GetDirectionTo(defender) & 7;
+
+        using var queue = PooledRefQueue<Mobile>.Create();
+
+        foreach (var m in attacker.GetMobilesInRange(1))
+        {
+            if (m == attacker || m == defender || !m.Alive)
+            {
+                continue;
+            }
+
+            var delta = ((int)attacker.GetDirectionTo(m) - primaryDir) & 7;
+
+            if (delta is (1 or 7) && SpellHelper.ValidIndirectTarget(attacker, m) &&
+                attacker.CanBeHarmful(m, false) && attacker.InLOS(m))
+            {
+                queue.Enqueue(m);
+            }
+        }
+
+        if (queue.Count == 0)
+        {
+            return;
+        }
+
+        var cleaveDamage = Math.Max(AOS.Scale(damage, percent), 1);
+
+        while (queue.Count > 0)
+        {
+            var m = queue.Dequeue();
+
+            attacker.DoHarmful(m, true);
+            m.FixedEffect(0x3779, 1, 15);
+            AOS.Damage(m, attacker, cleaveDamage, false, phys, fire, cold, pois, nrgy, chaos, direct);
         }
     }
 
