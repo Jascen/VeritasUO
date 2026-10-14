@@ -402,7 +402,16 @@ namespace Server.Items
         [CommandProperty(AccessLevel.GameMaster)]
         public int StrRequirement
         {
-            get => _strReq == -1 ? Core.AOS ? AosStrReq : OldStrReq : _strReq;
+            get
+            {
+                if (_strReq != -1)
+                {
+                    return _strReq;
+                }
+
+                var req = Core.AOS ? AosStrReq : OldStrReq;
+                return _quality == ArmorQuality.Low ? LowQualityLoot.ReduceStrRequirement(req) : req;
+            }
             set
             {
                 _strReq = value;
@@ -491,20 +500,29 @@ namespace Server.Items
         public virtual int BasePoisonResistance => 0;
         public virtual int BaseEnergyResistance => 0;
 
-        public override int PhysicalResistance => BasePhysicalResistance + GetProtOffset() +
-                                                  GetResourceAttrs().ArmorPhysicalResist + _physicalBonus;
+        public override int PhysicalResistance => ApplyQualityResistPenalty(
+            BasePhysicalResistance + GetProtOffset() + GetResourceAttrs().ArmorPhysicalResist + _physicalBonus
+        );
 
         public override int FireResistance =>
-            BaseFireResistance + GetProtOffset() + GetResourceAttrs().ArmorFireResist + _fireBonus;
+            ApplyQualityResistPenalty(
+                BaseFireResistance + GetProtOffset() + GetResourceAttrs().ArmorFireResist + _fireBonus
+            );
 
         public override int ColdResistance =>
-            BaseColdResistance + GetProtOffset() + GetResourceAttrs().ArmorColdResist + _coldBonus;
+            ApplyQualityResistPenalty(
+                BaseColdResistance + GetProtOffset() + GetResourceAttrs().ArmorColdResist + _coldBonus
+            );
 
         public override int PoisonResistance =>
-            BasePoisonResistance + GetProtOffset() + GetResourceAttrs().ArmorPoisonResist + _poisonBonus;
+            ApplyQualityResistPenalty(
+                BasePoisonResistance + GetProtOffset() + GetResourceAttrs().ArmorPoisonResist + _poisonBonus
+            );
 
         public override int EnergyResistance =>
-            BaseEnergyResistance + GetProtOffset() + GetResourceAttrs().ArmorEnergyResist + _energyBonus;
+            ApplyQualityResistPenalty(
+                BaseEnergyResistance + GetProtOffset() + GetResourceAttrs().ArmorEnergyResist + _energyBonus
+            );
 
         [CommandProperty(AccessLevel.GameMaster)]
         public ArmorBodyType BodyPosition =>
@@ -869,6 +887,11 @@ namespace Server.Items
         public CraftAttributeInfo GetResourceAttrs() =>
             CraftResources.GetInfo(_resource)?.AttributeInfo ?? CraftAttributeInfo.Blank;
 
+        // Under AOS the old-style AR penalty for low quality does nothing, so it costs resists instead.
+        // Floored at 0 so the penalty never turns a missing resist into a weakness.
+        private int ApplyQualityResistPenalty(int resist) =>
+            _quality == ArmorQuality.Low && resist > 0 ? Math.Max(0, resist - LowQualityLoot.ResistPenalty) : resist;
+
         public int GetProtOffset()
         {
             return _protectionLevel switch
@@ -904,7 +927,12 @@ namespace Server.Items
                 bonus += ArmorAttributes.DurabilityBonus + (resInfo?.AttributeInfo?.ArmorDurability ?? 0);
             }
 
-            return _quality == ArmorQuality.Exceptional ? bonus + 20 : bonus;
+            return _quality switch
+            {
+                ArmorQuality.Exceptional => bonus + 20,
+                ArmorQuality.Low         => bonus - LowQualityLoot.DurabilityPenalty,
+                _                        => bonus
+            };
         }
 
         public static void ValidateMobile(Mobile m)
@@ -1293,6 +1321,11 @@ namespace Server.Items
                 list.Add(1041350); // faction item
             }
 
+            if (_quality == ArmorQuality.Low)
+            {
+                list.Add($"{"low quality"}");
+            }
+
             if (RequiredRaces == Race.AllowElvesOnly)
             {
                 list.Add(1075086); // Elves Only
@@ -1461,7 +1494,24 @@ namespace Server.Items
 
             if (Crafter == null)
             {
-                LabelTo(from, Quality == ArmorQuality.Exceptional ? $"{name} of exceptional quality" : name);
+                switch (Quality)
+                {
+                    case ArmorQuality.Exceptional:
+                        {
+                            LabelTo(from, $"{name} of exceptional quality");
+                            break;
+                        }
+                    case ArmorQuality.Low:
+                        {
+                            LabelTo(from, $"{name} of low quality");
+                            break;
+                        }
+                    default:
+                        {
+                            LabelTo(from, name);
+                            break;
+                        }
+                }
                 return;
             }
 
