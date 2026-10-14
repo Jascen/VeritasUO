@@ -49,5 +49,4 @@ names the Memento file to start from if the feature is implemented later.
   counts them, so restoring any skill from the archive respects the total cap (pulling from skills locked Down).
 - **Draft:** undrafted skills are blocked from gaining in `SkillCheck.Gain`. Veritas `Skill` has no `CanGain` flag.
 - **Death records** are named `{serial}_{deathNumber}.bin` instead of `{name}_{deathNumber}.bin`.
-- **Sanctuary:** the Gypsy Encampment is the configurable `avatar.sanctuary.*` region and respawn point (see
-  `AvatarSanctuary.cs`).
+- **Sanctuary:** the Veritas gypsy starter camp is the sanctuary region and respawn point (see `AvatarSanctuary.cs`).
