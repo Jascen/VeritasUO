@@ -1,10 +1,14 @@
 using System;
 using System.Collections.Generic;
 using ModernUO.CodeGeneratedEvents;
+using Server.Accounting;
 using Server.Collections;
+using Server.Engines.Craft;
 using Server.Items;
 using Server.Logging;
 using Server.Mobiles;
+using Server.Multis;
+using Server.Multis.Boats;
 using Server.Network;
 
 namespace Server.Engines.Avatar;
@@ -19,9 +23,6 @@ public class AvatarEngine : GenericPersistence
 
     // Set while a template is applied so the skill churn does not feed the archive or count as gains
     public static bool DisableSkillGains { get; set; }
-
-    // Lets PlayerMobile.Resurrect tell the reset's own resurrection apart from a player's
-    private static PlayerMobile _resetting;
 
     public static bool IsEnabled { get; private set; }
 
@@ -100,136 +101,151 @@ public class AvatarEngine : GenericPersistence
         return context;
     }
 
-    public static bool IsResetting(PlayerMobile player) => _resetting == player;
-
     /// <summary>
-    /// Starts a new life on the same mobile: wipes possessions, skills and stats, resurrects if needed,
-    /// and returns the Avatar to the sanctuary. Houses stay owned because the mobile is unchanged.
+    /// Starts a new life on a new mobile in the same account slot and deletes the old one, so every system that holds
+    /// the old mobile (quests, murder counts, virtues, titles, timers) lets go of it. The Avatar context, Safety Deposit
+    /// Box, houses and player vendors move to the new mobile; the corpse and boats are lost with the rest of the old life's
+    /// possessions.
+    /// Deleting the old mobile disconnects its client, and the player logs back in as the new one in the sanctuary.
     /// </summary>
-    public static void ResetInPlace(PlayerMobile player)
+    /// <returns>The new mobile, or null when the old one is not an Avatar in an account slot.</returns>
+    public static PlayerMobile Reincarnate(PlayerMobile oldPlayer, bool keepSkillCaps)
     {
-        var context = GetContextOrDefault(player);
-        if (!context.Active)
+        if (!_contexts.TryGetValue(oldPlayer, out var context))
         {
-            return;
+            return null;
         }
 
-        context.LifetimeGameTime += context.GetRunGameTime(player);
-        context.RunStartGameTime = player.GameTime;
-
-        if (!player.Alive)
+        var account = oldPlayer.Account as Account;
+        var slot = -1;
+        for (var i = 0; i < account?.Length; i++)
         {
-            _resetting = player;
-            try
+            if (account[i] == oldPlayer)
             {
-                player.Resurrect();
-            }
-            finally
-            {
-                _resetting = null;
+                slot = i;
+                break;
             }
         }
 
-        WipePossessions(player, context);
-
-        for (var i = 0; i < player.Skills.Length; i++)
+        if (slot < 0)
         {
-            var skill = player.Skills[i];
-            skill.SetLockNoRelay(SkillLock.Up);
-            skill.Base = 0;
+            logger.Warning("Avatar {Player} has no account slot and cannot be reincarnated", oldPlayer);
+            return null;
         }
 
-        if (!context.UnlockRecordRecipes)
+        // Race sets the body, so it must follow Female
+        var newPlayer = new PlayerMobile
         {
-            player.ResetRecipes();
+            Player = true,
+            AccessLevel = oldPlayer.AccessLevel,
+            Name = oldPlayer.RawName,
+            Female = oldPlayer.Female,
+            Race = oldPlayer.Race,
+            Hue = oldPlayer.Hue,
+            HairItemID = oldPlayer.HairItemID,
+            HairHue = oldPlayer.HairHue,
+            FacialHairItemID = oldPlayer.FacialHairItemID,
+            FacialHairHue = oldPlayer.FacialHairHue,
+            Hunger = 20
+        };
+
+        account[slot] = newPlayer;
+
+        if (keepSkillCaps)
+        {
+            for (var i = 0; i < newPlayer.Skills.Length; i++)
+            {
+                newPlayer.Skills[i].CapFixedPoint = oldPlayer.Skills[i].CapFixedPoint;
+            }
         }
 
-        player.Fame = 0;
-        player.Karma = 0;
-        player.Hunger = 20;
+        if (context.UnlockRecordRecipes)
+        {
+            foreach (var recipeId in Recipe.Recipes.Keys)
+            {
+                if (oldPlayer.HasRecipe(recipeId))
+                {
+                    newPlayer.AcquireRecipe(recipeId);
+                }
+            }
+        }
+
+        context.LifetimeGameTime += context.GetRunGameTime(oldPlayer);
+        _contexts.Remove(oldPlayer);
+        context.TransferTo(newPlayer);
+        _contexts[newPlayer] = context;
+        context.RunStartGameTime = newPlayer.GameTime;
+
+        TransferHoldings(oldPlayer, newPlayer, context);
 
         context.RewardCache = null;
         context.BoostedTemplateCache = null;
         context.SelectedTemplate = AvatarStarterTemplates.None;
         context.GenerateRivalry();
 
-        AvatarSanctuary.MoveTo(player);
-        InitializePlayer(player);
-        ApplyContext(player, context);
+        AvatarSanctuary.MoveTo(newPlayer);
+        InitializePlayer(newPlayer);
+        ApplyContext(newPlayer, context);
 
         if (context.DraftModeEnabled)
         {
-            context.SetDraftModeEnabled(player, true);
+            context.SetDraftModeEnabled(newPlayer, true);
         }
 
-        player.Hits = player.HitsMax;
-        player.Stam = player.StamMax;
-        player.Mana = player.ManaMax;
-        player.NetState.SendSkillsUpdate(player.Skills);
+        newPlayer.Hits = newPlayer.HitsMax;
+        newPlayer.Stam = newPlayer.StamMax;
+        newPlayer.Mana = newPlayer.ManaMax;
+
+        // Parked like any logged-out character until the player logs in to it
+        newPlayer.LogoutLocation = newPlayer.Location;
+        newPlayer.LogoutMap = newPlayer.Map;
+        newPlayer.Internalize();
+
+        logger.Information("Avatar {OldPlayer} reincarnated as {NewPlayer}", oldPlayer, newPlayer);
+
+        // The old life's gear goes with it rather than lying out for others to loot
+        oldPlayer.Corpse?.Delete();
+        oldPlayer.Delete();
+
+        return newPlayer;
     }
 
-    private static void WipePossessions(PlayerMobile player, PlayerContext context)
+    // Must run before the old mobile is deleted, which would take its bank box and houses with it
+    private static void TransferHoldings(PlayerMobile oldPlayer, PlayerMobile newPlayer, PlayerContext context)
     {
-        var box = context.HasSafetyDepositBox ? context.SafetyDepositBox : null;
-        var bank = player.BankBox;
-
-        using var toDelete = PooledRefQueue<Item>.Create();
-
-        foreach (var item in player.Items)
+        if (context.HasSafetyDepositBox)
         {
-            if (item != bank)
-            {
-                toDelete.Enqueue(item);
-            }
+            var box = context.SafetyDepositBox;
+            box.Owner = newPlayer;
+            newPlayer.BankBox.AddItem(box);
+            box.Location = new Point3D(0, 0, 0);
         }
 
-        foreach (var item in bank.Items)
+        foreach (var house in BaseHouse.GetHouses(oldPlayer))
         {
-            if (item != box)
+            house.Owner = newPlayer;
+
+            foreach (var vendor in house.PlayerVendors)
             {
-                toDelete.Enqueue(item);
-            }
-        }
-
-        while (toDelete.Count > 0)
-        {
-            toDelete.Dequeue().Delete();
-        }
-
-        if (box != null)
-        {
-            box.Owner = player;
-        }
-
-        if (player.AllFollowers?.Count > 0)
-        {
-            using var followers = PooledRefQueue<Mobile>.Create();
-            foreach (var m in player.AllFollowers)
-            {
-                followers.Enqueue(m);
-            }
-
-            while (followers.Count > 0)
-            {
-                if (followers.Dequeue() is BaseCreature bc && bc.ControlMaster == player)
+                if (vendor.Owner == oldPlayer)
                 {
-                    bc.SetControlMaster(null);
+                    vendor.Owner = newPlayer;
                 }
             }
         }
 
-        if (player.Stabled?.Count > 0)
+        using var boats = PooledRefQueue<BaseBoat>.Create();
+        foreach (var boat in BaseBoat.Boats)
         {
-            using var stabled = PooledRefQueue<Mobile>.Create();
-            foreach (var m in player.Stabled)
+            if (boat.Owner == oldPlayer)
             {
-                stabled.Enqueue(m);
+                boats.Enqueue(boat);
             }
+        }
 
-            while (stabled.Count > 0)
-            {
-                stabled.Dequeue().Delete();
-            }
+        while (boats.Count > 0)
+        {
+            boats.Dequeue().Delete();
         }
     }
 

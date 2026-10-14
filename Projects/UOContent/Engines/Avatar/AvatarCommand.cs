@@ -86,7 +86,7 @@ public static class AvatarCommand
 
     private static void Enable(PlayerMobile from, bool draft)
     {
-        from.SendMessage("Your character will be reborn shortly...");
+        from.SendMessage("Your character will be recreated and you will be disconnected shortly...");
 
         Timer.DelayCall(
             TimeSpan.FromSeconds(1),
@@ -98,12 +98,14 @@ public static class AvatarCommand
                 }
 
                 var context = AvatarEngine.GetOrCreateContext(from);
-                AvatarEngine.ResetInPlace(from);
 
+                // Reincarnate carries Draft mode over to the new mobile
                 if (draft)
                 {
                     context.SetDraftModeEnabled(from, true);
                 }
+
+                AvatarEngine.Reincarnate(from, false);
             }
         );
     }

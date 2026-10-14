@@ -43,8 +43,8 @@ names the Memento file to start from if the feature is implemented later.
 - `avatar-migrate--game-time` command (a Memento save migration).
 
 ## Behavior differences in the port
-- **Death:** the same mobile is reset in place instead of being swapped for a new one, and the player is not
-  disconnected. Followers are released and stabled pets deleted.
+- **Death:** player vendors move to the new mobile only when they stand in one of its houses. Memento scanned
+  every player vendor in the world, which also caught vendors rented in other players' houses.
 - **Secondary skills:** Memento's engine excludes crafting and gathering skills from the skill total. Veritas
   counts them, so restoring any skill from the archive respects the total cap (pulling from skills locked Down).
 - **Draft:** undrafted skills are blocked from gaining in `SkillCheck.Gain`. Veritas `Skill` has no `CanGain` flag.

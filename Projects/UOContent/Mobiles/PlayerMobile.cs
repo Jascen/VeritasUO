@@ -2427,8 +2427,8 @@ namespace Server.Mobiles
 
         public override void Resurrect()
         {
-            // Avatars are reborn through a full reset rather than a normal resurrection
-            if (Avatar.Active && !Alive && !AvatarEngine.IsResetting(this))
+            // Avatars are reborn on a new mobile rather than resurrected
+            if (Avatar.Active && !Alive)
             {
                 AvatarConfirm.Send(
                     this,
@@ -2436,10 +2436,22 @@ namespace Server.Mobiles
                     "Your character has died and cannot resurrect. Would you like to return to the Sanctuary to start over?",
                     () =>
                     {
-                        if (!Deleted && !Alive)
+                        if (Deleted || Alive)
                         {
-                            AvatarEngine.ResetInPlace(this);
+                            return;
                         }
+
+                        SendMessage("Your character will be recreated and you will be disconnected shortly...");
+                        Timer.DelayCall(
+                            TimeSpan.FromSeconds(1),
+                            () =>
+                            {
+                                if (!Deleted && !Alive)
+                                {
+                                    AvatarEngine.Reincarnate(this, true);
+                                }
+                            }
+                        );
                     }
                 );
                 return;

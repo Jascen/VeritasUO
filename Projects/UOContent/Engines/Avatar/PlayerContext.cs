@@ -139,12 +139,19 @@ public partial class PlayerContext
     [SerializedCommandProperty(AccessLevel.GameMaster)]
     private int _prestigeLevel;
 
-    // GameTime keeps accumulating on the same mobile across lives, so each life is measured from here
+    // The mobile's GameTime when the current life began
     [SerializableField(29)]
     [SerializedCommandProperty(AccessLevel.GameMaster)]
     private TimeSpan _runStartGameTime;
 
     public TimeSpan GetRunGameTime(PlayerMobile player) => player.GameTime - RunStartGameTime;
+
+    // Each life is a new mobile, so the context follows the Avatar from the dead mobile to its successor
+    public void TransferTo(PlayerMobile player)
+    {
+        _player = player;
+        _skills.TransferTo(player);
+    }
 
     private bool ShouldSerializeDraftedSkillSet() => _draftedSkillSet != null;
 
