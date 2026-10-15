@@ -28,6 +28,8 @@ public partial class SkillArchive
         _skills = new int[SkillInfo.Table.Length];
     }
 
+    public void TransferTo(PlayerMobile player) => _player = player;
+
     [CommandProperty(AccessLevel.GameMaster)]
     public int Alchemy { get => this[SkillName.Alchemy]; set => this[SkillName.Alchemy] = value; }
 

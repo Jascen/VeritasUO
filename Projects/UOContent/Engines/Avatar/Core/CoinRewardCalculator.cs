@@ -7,7 +7,7 @@ public static class CoinRewardCalculator
 {
     public static int GetKillCoinValue(BaseCreature creature)
     {
-        var value = GetHitsBase(creature);
+        var value = GetHitsBase(creature) * 2;
         if (value < 1)
         {
             return 0;
