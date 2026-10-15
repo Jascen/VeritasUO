@@ -87,8 +87,8 @@ public class AvatarSystemTests
         var rat = new Rat();
         var dragon = new Dragon();
 
-        var ratValue = CoinRewardCalculator.GetKillCoinValue(rat);
-        var dragonValue = CoinRewardCalculator.GetKillCoinValue(dragon);
+        var ratValue = CoinRewardCalculator.GetKillCoinValue(rat).Total;
+        var dragonValue = CoinRewardCalculator.GetKillCoinValue(dragon).Total;
 
         Assert.True(ratValue > 0);
         Assert.True(dragonValue > ratValue);

@@ -3,38 +3,46 @@ using Server.Mobiles;
 
 namespace Server.Engines.Avatar;
 
+/// <summary>
+/// Each step of a kill coin calculation. <see cref="HitsBase"/> and <see cref="DefenseBase"/> are the raw
+/// base values; every later field is the running coin value after that step, so <see cref="Total"/> is the reward.
+/// </summary>
+public readonly record struct KillCoinValue(
+    int HitsBase,
+    int DefenseBase,
+    int Archetype,
+    int Breath,
+    int Poison,
+    int Paragon,
+    int Aggressor
+)
+{
+    public int Total => Math.Max(Aggressor, 0);
+}
+
 public static class CoinRewardCalculator
 {
-    public static int GetKillCoinValue(BaseCreature creature)
+    public static KillCoinValue GetKillCoinValue(BaseCreature creature)
     {
-        var value = GetHitsBase(creature) * 2;
+        var hitsBase = GetHitsBase(creature);
+        var value = hitsBase * 2;
         if (value < 1)
         {
-            return 0;
+            return new KillCoinValue(hitsBase, 0, 0, 0, 0, 0, 0);
         }
 
-        value += GetDefenseBase(creature);
+        var defenseBase = GetDefenseBase(creature);
+        value += defenseBase;
 
-        value = ApplyArchetypeMultiplier(value, creature);
-        value = ApplyBreathMultiplier(value, creature);
-
-        if (creature.HitPoison != null)
-        {
-            value = ApplyMultiplier(value, 115);
-        }
-
-        if (creature.IsParagon)
-        {
-            value = ApplyMultiplier(value, 150);
-        }
+        var archetype = ApplyArchetypeMultiplier(value, creature);
+        var breath = ApplyBreathMultiplier(archetype, creature);
+        var poison = creature.HitPoison != null ? ApplyMultiplier(breath, 115) : breath;
+        var paragon = creature.IsParagon ? ApplyMultiplier(poison, 150) : poison;
 
         // Passive creature rewards are notably penalized
-        if (creature.FightMode == FightMode.Aggressor)
-        {
-            value = ApplyMultiplier(value, 25);
-        }
+        var aggressor = creature.FightMode == FightMode.Aggressor ? ApplyMultiplier(paragon, 25) : paragon;
 
-        return Math.Max(value, 0);
+        return new KillCoinValue(hitsBase, defenseBase, archetype, breath, poison, paragon, aggressor);
     }
 
     private static int ApplyArchetypeMultiplier(int value, BaseCreature creature)
