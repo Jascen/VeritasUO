@@ -3,14 +3,16 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
+using Server.Engines.Avatar;
 using Server.Logging;
 using Server.Mobiles;
 
 namespace Server.Commands;
 
 /// <summary>
-/// Constructs every <see cref="BaseCreature"/> type several times and writes the average,
-/// min, and max HitsMax per type to a CSV. Construction randomizes stats, so multiple samples are taken.
+/// Constructs every <see cref="BaseCreature"/> type several times and writes HitsMax and
+/// <see cref="CoinRewardCalculator.GetKillCoinValue"/> stats per type to a CSV.
+/// Construction randomizes stats, so multiple samples are taken.
 /// </summary>
 public static class CreatureHitsStats
 {
@@ -29,7 +31,7 @@ public static class CreatureHitsStats
     }
 
     [Usage("CreatureHitsStats")]
-    [Description("Spawns every creature type 5 times and writes the average hit points per type to a CSV.")]
+    [Description("Spawns every creature type 5 times and writes hit point and kill coin values per type to a CSV.")]
     private static void CreatureHitsStats_OnCommand(CommandEventArgs e)
     {
         if (_running != null)
@@ -78,9 +80,21 @@ public static class CreatureHitsStats
 
     private class StatsTimer : Timer
     {
+        // Averaged per type; each is a step of CoinRewardCalculator.GetKillCoinValue.
+        private static readonly (string Name, Func<KillCoinValue, int> Selector)[] _coinColumns =
+        [
+            ("HitsBase", c => c.HitsBase),
+            ("DefenseBase", c => c.DefenseBase),
+            ("Archetype", c => c.Archetype),
+            ("Breath", c => c.Breath),
+            ("Poison", c => c.Poison),
+            ("Paragon", c => c.Paragon),
+            ("Aggressor", c => c.Aggressor)
+        ];
+
         private readonly Mobile _from;
         private readonly List<ConstructorInfo> _ctors;
-        private readonly List<(string Type, double Average, int Min, int Max)> _results = [];
+        private readonly List<(string Type, int[] Hits, KillCoinValue[] Coins)> _results = [];
         private int _index;
         private int _failures;
 
@@ -109,9 +123,8 @@ public static class CreatureHitsStats
 
         private void SampleType(ConstructorInfo ctor)
         {
-            var total = 0;
-            var min = int.MaxValue;
-            var max = int.MinValue;
+            var hits = new int[SamplesPerType];
+            var coins = new KillCoinValue[SamplesPerType];
 
             for (var i = 0; i < SamplesPerType; i++)
             {
@@ -120,11 +133,8 @@ public static class CreatureHitsStats
                 try
                 {
                     creature = (BaseCreature)ctor.Invoke(null);
-                    var hits = creature.HitsMax;
-
-                    total += hits;
-                    min = Math.Min(min, hits);
-                    max = Math.Max(max, hits);
+                    hits[i] = creature.HitsMax;
+                    coins[i] = CoinRewardCalculator.GetKillCoinValue(creature);
                 }
                 catch (Exception ex)
                 {
@@ -138,7 +148,7 @@ public static class CreatureHitsStats
                 }
             }
 
-            _results.Add((ctor.DeclaringType!.Name, (double)total / SamplesPerType, min, max));
+            _results.Add((ctor.DeclaringType!.Name, hits, coins));
         }
 
         private void Finish()
@@ -147,11 +157,27 @@ public static class CreatureHitsStats
 
             using (var writer = new StreamWriter(path))
             {
-                writer.WriteLine("Type,AverageHits,MinHits,MaxHits");
-
-                foreach (var (type, average, min, max) in _results)
+                writer.Write("Type,AverageHits,MinHits,MaxHits");
+                foreach (var (name, _) in _coinColumns)
                 {
-                    writer.WriteLine(string.Create(CultureInfo.InvariantCulture, $"{type},{average:F1},{min},{max}"));
+                    writer.Write(',');
+                    writer.Write(name);
+                }
+
+                writer.WriteLine(",AverageCoins,MinCoins,MaxCoins");
+
+                foreach (var (type, hits, coins) in _results)
+                {
+                    var (avgHits, minHits, maxHits) = Summarize(hits, h => h);
+                    writer.Write(string.Create(CultureInfo.InvariantCulture, $"{type},{avgHits:F1},{minHits},{maxHits}"));
+
+                    foreach (var (_, selector) in _coinColumns)
+                    {
+                        writer.Write(string.Create(CultureInfo.InvariantCulture, $",{Summarize(coins, selector).Average:F1}"));
+                    }
+
+                    var (avgCoins, minCoins, maxCoins) = Summarize(coins, c => c.Total);
+                    writer.WriteLine(string.Create(CultureInfo.InvariantCulture, $",{avgCoins:F1},{minCoins},{maxCoins}"));
                 }
             }
 
@@ -161,6 +187,23 @@ public static class CreatureHitsStats
             {
                 _from.SendMessage($"Wrote {_results.Count} creature types to {path} ({_failures} failed, see log).");
             }
+        }
+
+        private static (double Average, int Min, int Max) Summarize<T>(T[] values, Func<T, int> selector)
+        {
+            var total = 0;
+            var min = int.MaxValue;
+            var max = int.MinValue;
+
+            for (var i = 0; i < values.Length; i++)
+            {
+                var value = selector(values[i]);
+                total += value;
+                min = Math.Min(min, value);
+                max = Math.Max(max, value);
+            }
+
+            return ((double)total / values.Length, min, max);
         }
     }
 }

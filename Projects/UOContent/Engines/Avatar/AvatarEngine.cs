@@ -342,7 +342,7 @@ public class AvatarEngine : GenericPersistence
             return;
         }
 
-        var value = CoinRewardCalculator.GetKillCoinValue(creature);
+        var value = CoinRewardCalculator.GetKillCoinValue(creature).Total;
         if (value < 1)
         {
             return;
