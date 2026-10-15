@@ -1160,21 +1160,6 @@ namespace Server.Items
             return base.CanEquip(from);
         }
 
-        public override bool CheckPropertyConflict(Mobile m)
-        {
-            if (base.CheckPropertyConflict(m))
-            {
-                return true;
-            }
-
-            return Layer switch
-            {
-                Layer.Pants => m.FindItemOnLayer(Layer.InnerLegs) != null,
-                Layer.Shirt => m.FindItemOnLayer(Layer.InnerTorso) != null,
-                _           => false
-            };
-        }
-
         public override bool OnEquip(Mobile from)
         {
             from.CheckStatTimers();

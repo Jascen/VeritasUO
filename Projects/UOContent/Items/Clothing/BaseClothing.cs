@@ -647,21 +647,6 @@ namespace Server.Items
         public override bool AllowEquippedCast(Mobile from) =>
             base.AllowEquippedCast(from) || Attributes.SpellChanneling != 0;
 
-        public override bool CheckPropertyConflict(Mobile m)
-        {
-            if (base.CheckPropertyConflict(m))
-            {
-                return true;
-            }
-
-            return Layer switch
-            {
-                Layer.Pants => m.FindItemOnLayer(Layer.InnerLegs) != null,
-                Layer.Shirt => m.FindItemOnLayer(Layer.InnerTorso) != null,
-                _           => false
-            };
-        }
-
         public override void AddNameProperty(IPropertyList list)
         {
             if (_lootAffixes?.AddNameProperty(list, this, Name) == true)
