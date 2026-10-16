@@ -775,6 +775,7 @@ namespace Server.Mobiles
 
         public override void OnAfterSpawn()
         {
+            base.OnAfterSpawn();
             CheckMorph();
         }
 

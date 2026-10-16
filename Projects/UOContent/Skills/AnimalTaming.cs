@@ -423,6 +423,11 @@ namespace Server.SkillHandlers
                                     ScaleSkills(m_Creature, 0.90); // 90% of original skills
                                 }
 
+                                // Undoes the spawn-time hits doubling in BaseCreature.OnAfterSpawn
+                                var hitsSeed = m_Creature.HitsMaxSeed > 0 ? m_Creature.HitsMaxSeed : m_Creature.RawStr;
+                                m_Creature.HitsMaxSeed = Math.Max(1, hitsSeed / 2);
+                                m_Creature.Hits = m_Creature.Hits;
+
                                 if (m_Creature.StatLossAfterTame)
                                 {
                                     ScaleStats(m_Creature, 0.50);

@@ -1920,6 +1920,16 @@ namespace Server.Mobiles
             base.OnBeforeSpawn(location, m);
         }
 
+        public override void OnAfterSpawn()
+        {
+            base.OnAfterSpawn();
+
+            // Creatures without a hits seed derive HitsMax from Str, so seed from RawStr to double only hits.
+            var seed = HitsMaxSeed > 0 ? HitsMaxSeed : RawStr;
+            HitsMaxSeed = Math.Clamp(seed * 2, 1, 65000);
+            Hits = HitsMax;
+        }
+
         public override ApplyPoisonResult ApplyPoison(Mobile from, Poison poison)
         {
             if (!Alive || IsDeadPet)
