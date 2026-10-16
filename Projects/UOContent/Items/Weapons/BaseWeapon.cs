@@ -3091,7 +3091,7 @@ public abstract partial class BaseWeapon
         if ((prop = BaseCleavePercent + WeaponAttributes.Cleave) != 0)
         {
             // 1060658 is used by the loot affix Item Level line; same cliloc twice collides in the tooltip.
-            list.Add(1060659, $"{"cleave"}\t{prop}%"); // ~1_val~: ~2_val~
+            list.Add(1060659, $"{"Cleave Damage"}\t{prop}%"); // ~1_val~: ~2_val~
         }
 
         if (ImmolatingWeaponSpell.IsImmolating(this))
@@ -3678,7 +3678,7 @@ public abstract partial class BaseWeapon
     /// <summary>
     /// Built-in cleave every melee weapon has before any Cleave attribute.
     /// </summary>
-    public int BaseCleavePercent => this is BaseRanged ? 0 : Layer == Layer.OneHanded ? 20 : 50;
+    public int BaseCleavePercent => this is BaseRanged ? 0 : Layer == Layer.OneHanded ? 10 : 25;
 
     // Cleave only applies to a player's basic attack. The combat loop is the only caller of OnBeforeSwing,
     // which tags the swing; abilities that strike extra targets call OnSwing/OnHit directly and are never tagged.
@@ -3700,7 +3700,12 @@ public abstract partial class BaseWeapon
             return 0;
         }
 
-        return AosWeaponAttributes.GetValue(attacker, AosWeaponAttribute.Cleave);
+        var percent = AosWeaponAttributes.GetValue(attacker, AosWeaponAttribute.Cleave);
+
+        // +1% per whole point of the swing's combat skill above 100; GetUsedSkill resolves UseBestSkill/MageWeapon.
+        var overcap = (int)attacker.Skills[GetUsedSkill(attacker, true)].Value - 100;
+
+        return overcap > 0 ? percent + overcap : percent;
     }
 
     private void DoCleave(
@@ -3733,7 +3738,7 @@ public abstract partial class BaseWeapon
 
             var delta = ((int)attacker.GetDirectionTo(m) - primaryDir) & 7;
 
-            if (delta is (1 or 7) && SpellHelper.ValidIndirectTarget(attacker, m) &&
+            if (delta is (1 or 7) && IsCleaveTarget(attacker, m) && SpellHelper.ValidIndirectTarget(attacker, m) &&
                 attacker.CanBeHarmful(m, false) && attacker.InLOS(m))
             {
                 queue.Enqueue(m);
@@ -3755,6 +3760,64 @@ public abstract partial class BaseWeapon
             m.FixedEffect(0x3779, 1, 15);
             AOS.Damage(m, attacker, cleaveDamage, false, phys, fire, cold, pois, nrgy, chaos, direct);
         }
+    }
+
+    // Cleave must never start a fight: it only splashes monsters that would attack on sight,
+    // or anything already fighting the attacker, their pets, or their party.
+    private static bool IsCleaveTarget(Mobile attacker, Mobile m)
+    {
+        if (m is BaseCreature { Controlled: false, Summoned: false } bc && bc.FightMode switch
+            {
+                FightMode.Strongest or FightMode.Weakest or FightMode.Closest => true,
+                FightMode.Evil                                                => attacker.Karma < 0,
+                _                                                             => false
+            })
+        {
+            return true;
+        }
+
+        if (IsCleaveAlly(attacker, m.Combatant))
+        {
+            return true;
+        }
+
+        foreach (var info in m.Aggressors)
+        {
+            if (IsCleaveAlly(attacker, info.Attacker))
+            {
+                return true;
+            }
+        }
+
+        foreach (var info in m.Aggressed)
+        {
+            if (IsCleaveAlly(attacker, info.Defender))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool IsCleaveAlly(Mobile attacker, Mobile m)
+    {
+        if (m == null)
+        {
+            return false;
+        }
+
+        if (m == attacker)
+        {
+            return true;
+        }
+
+        if (m is BaseCreature bc && (bc.ControlMaster == attacker || bc.SummonMaster == attacker))
+        {
+            return true;
+        }
+
+        return Engines.PartySystem.Party.Get(attacker)?.Contains(m) == true;
     }
 
     [AfterDeserialization]
