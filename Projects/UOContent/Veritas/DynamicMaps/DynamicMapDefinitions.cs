@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using ModernUO.CodeGeneratedEvents;
 using Server.Mobiles;
 using Server.Network;
+using Server.Veritas.Instancing;
 
 namespace Server.Veritas.DynamicMaps;
 
@@ -52,6 +53,12 @@ public static class DynamicMapDefinitions
         foreach (var m in maps)
         {
             if (m == null || m == Map.Internal || m.MapID is < 0 or > 0x7E || m.Width <= 0 || m.Height <= 0)
+            {
+                continue;
+            }
+
+            // Instance pool maps reuse their base map's client id, so the client already has them.
+            if (InstanceManager.IsInstanceMap(m))
             {
                 continue;
             }
