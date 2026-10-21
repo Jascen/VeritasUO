@@ -63,5 +63,8 @@ namespace Server.Mobiles
             AddLoot(LootPack.Rich);
             AddLoot(LootPack.MedScrolls);
         }
+
+        private static MonsterAbility[] _abilities = { MonsterAbilities.PoisonBreath };
+        public override MonsterAbility[] GetMonsterAbilities() => _abilities;
     }
 }

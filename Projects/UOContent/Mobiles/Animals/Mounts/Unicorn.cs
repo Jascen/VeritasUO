@@ -121,5 +121,8 @@ namespace Server.Mobiles
                 c.DropItem(new UnicornRibs());
             }
         }
+
+        private static MonsterAbility[] _abilities = { MonsterAbilities.PrismaticBreath };
+        public override MonsterAbility[] GetMonsterAbilities() => _abilities;
     }
 }

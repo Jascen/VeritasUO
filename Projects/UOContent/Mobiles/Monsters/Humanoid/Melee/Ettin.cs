@@ -50,5 +50,8 @@ namespace Server.Mobiles
             AddLoot(LootPack.Average);
             AddLoot(LootPack.Potions);
         }
+
+        private static MonsterAbility[] _abilities = { MonsterAbilities.LargeBoulderThrow };
+        public override MonsterAbility[] GetMonsterAbilities() => _abilities;
     }
 }

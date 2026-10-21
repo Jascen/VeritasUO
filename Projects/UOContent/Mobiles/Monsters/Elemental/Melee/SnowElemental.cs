@@ -56,5 +56,8 @@ namespace Server.Mobiles
         {
             AddLoot(LootPack.Rich);
         }
+
+        private static MonsterAbility[] _abilities = { MonsterAbilities.FrostBreath };
+        public override MonsterAbility[] GetMonsterAbilities() => _abilities;
     }
 }

@@ -58,5 +58,8 @@ namespace Server.Mobiles
             AddLoot(LootPack.Average);
             AddLoot(LootPack.MedScrolls);
         }
+
+        private static MonsterAbility[] _abilities = { MonsterAbilities.LightningBreath };
+        public override MonsterAbility[] GetMonsterAbilities() => _abilities;
     }
 }

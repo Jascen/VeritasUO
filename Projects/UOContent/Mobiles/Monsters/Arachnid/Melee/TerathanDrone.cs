@@ -54,5 +54,8 @@ namespace Server.Mobiles
             AddLoot(LootPack.Meager);
             // TODO: weapon?
         }
+
+        private static MonsterAbility[] _abilities = { MonsterAbilities.WebSpit };
+        public override MonsterAbility[] GetMonsterAbilities() => _abilities;
     }
 }

@@ -58,5 +58,8 @@ namespace Server.Mobiles
             AddLoot(LootPack.Meager);
             AddLoot(LootPack.Gems);
         }
+
+        private static MonsterAbility[] _abilities = { MonsterAbilities.FireBreath };
+        public override MonsterAbility[] GetMonsterAbilities() => _abilities;
     }
 }

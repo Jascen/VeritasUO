@@ -57,5 +57,8 @@ namespace Server.Mobiles
         {
             AddLoot(LootPack.Rich, 2);
         }
+
+        private static MonsterAbility[] _abilities = { MonsterAbilities.BoulderThrow };
+        public override MonsterAbility[] GetMonsterAbilities() => _abilities;
     }
 }

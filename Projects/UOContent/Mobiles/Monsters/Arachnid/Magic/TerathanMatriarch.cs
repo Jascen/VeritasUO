@@ -55,5 +55,8 @@ namespace Server.Mobiles
             AddLoot(LootPack.MedScrolls, 2);
             AddLoot(LootPack.Potions);
         }
+
+        private static MonsterAbility[] _abilities = { MonsterAbilities.WebSpit };
+        public override MonsterAbility[] GetMonsterAbilities() => _abilities;
     }
 }
