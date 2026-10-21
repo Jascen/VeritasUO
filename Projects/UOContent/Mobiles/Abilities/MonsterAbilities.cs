@@ -10,6 +10,15 @@ public static class MonsterAbilities
     public static FireBreath FireBreath => new();
     public static ChaosBreath ChaosBreath => new();
     public static ColdBreath ColdBreath => new();
+    public static FrostBreath FrostBreath => new();
+    public static WaterBlast WaterBlast => new();
+    public static PoisonBreath PoisonBreath => new();
+    public static LightningBreath LightningBreath => new();
+    public static PrismaticBreath PrismaticBreath => new();
+    public static WebSpit WebSpit => new();
+    public static BoulderThrow BoulderThrow => new();
+    public static LargeBoulderThrow LargeBoulderThrow => new();
+    public static MummyWrap MummyWrap => new();
 
     // Resistance Debuffs
     public static GraspingClaw GraspingClaw => new();

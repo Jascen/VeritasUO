@@ -65,5 +65,8 @@ namespace Server.Mobiles
         private void MigrateFrom(V0Content content)
         {
         }
+
+        private static MonsterAbility[] _abilities = { MonsterAbilities.WaterBlast };
+        public override MonsterAbility[] GetMonsterAbilities() => _abilities;
     }
 }

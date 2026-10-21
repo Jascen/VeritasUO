@@ -62,5 +62,8 @@ namespace Server.Mobiles
             AddLoot(LootPack.Gems);
             AddLoot(LootPack.Potions);
         }
+
+        private static MonsterAbility[] _abilities = { MonsterAbilities.MummyWrap };
+        public override MonsterAbility[] GetMonsterAbilities() => _abilities;
     }
 }

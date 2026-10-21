@@ -57,5 +57,8 @@ namespace Server.Mobiles
         {
             AddLoot(LootPack.Average);
         }
+
+        private static MonsterAbility[] _abilities = { MonsterAbilities.WebSpit };
+        public override MonsterAbility[] GetMonsterAbilities() => _abilities;
     }
 }

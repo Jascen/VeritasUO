@@ -201,7 +201,17 @@ public class FireBreath : MonsterAbility
                     nrgyDamage
                 );
             }
+
+            if (target.Alive)
+            {
+                OnBreathHit(source, target);
+            }
         }
+    }
+
+    // Secondary effects (poison, paralysis) for breaths that land; evaded breaths never reach this.
+    public virtual void OnBreathHit(BaseCreature source, Mobile target)
+    {
     }
 
     public virtual int BreathComputeDamage(BaseCreature source)
