@@ -55,19 +55,7 @@ public abstract partial class BaseChampion : BaseCreature
         return artifact;
     }
 
-    private static PowerScroll CreateRandomPowerScroll()
-    {
-        var level = Utility.RandomDouble() switch
-        {
-            < 0.05 => 20,
-            < 0.4  => 15,
-            _      => 10
-        };
-
-        return PowerScroll.CreateRandomNoCraft(level, level);
-    }
-
-    public void GivePowerScrolls()
+    public void GiveTomePages()
     {
         if (Map != Map.Felucca)
         {
@@ -127,34 +115,32 @@ public abstract partial class BaseChampion : BaseCreature
         {
             var m = toGive[i % toGive.Count];
 
-            var ps = CreateRandomPowerScroll();
-
-            GivePowerScrollTo(m, ps);
+            GiveTomePageTo(m, TomePage.CreateRandom(true));
         }
     }
 
-    public static void GivePowerScrollTo(Mobile m, PowerScroll ps)
+    public static void GiveTomePageTo(Mobile m, TomePage page)
     {
-        if (ps == null || m == null) // sanity
+        if (page == null || m == null) // sanity
         {
             return;
         }
 
-        m.SendLocalizedMessage(1049524); // You have received a scroll of power!
+        m.SendMessage("You have received a tome page!");
 
         if (!Core.SE || m.Alive)
         {
-            m.AddToBackpack(ps);
+            m.AddToBackpack(page);
         }
         else
         {
             if (m.Corpse?.Deleted == false)
             {
-                m.Corpse.DropItem(ps);
+                m.Corpse.DropItem(page);
             }
             else
             {
-                m.AddToBackpack(ps);
+                m.AddToBackpack(page);
             }
         }
 
@@ -181,21 +167,21 @@ public abstract partial class BaseChampion : BaseCreature
 
         if (chance > 0 && chance > Utility.Random(100))
         {
-            var powerScroll = new PowerScroll(ps.Skill, ps.Value);
+            var copy = new TomePage(page.Skill, page.Section);
 
             prot.SendLocalizedMessage(1049368); // You have been rewarded for your dedication to Justice!
 
             if (!Core.SE || prot.Alive)
             {
-                prot.AddToBackpack(powerScroll);
+                prot.AddToBackpack(copy);
             }
             else if (prot.Corpse?.Deleted == false)
             {
-                prot.Corpse.DropItem(powerScroll);
+                prot.Corpse.DropItem(copy);
             }
             else
             {
-                prot.AddToBackpack(powerScroll);
+                prot.AddToBackpack(copy);
             }
         }
     }
@@ -204,7 +190,7 @@ public abstract partial class BaseChampion : BaseCreature
     {
         if (!NoKillAwards)
         {
-            GivePowerScrolls();
+            GiveTomePages();
 
             if (NoGoodies)
             {

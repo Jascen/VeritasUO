@@ -235,7 +235,9 @@ public partial class Harrower : BaseCreature
         m_Timer.Start();
     }
 
-    public void GivePowerScrolls()
+    private const int TomePageCount = 8;
+
+    public void GiveRewardScrolls()
     {
         var toGive = new List<Mobile>();
         var rights = GetLootingRights(DamageEntries, HitsMax);
@@ -300,6 +302,11 @@ public partial class Harrower : BaseCreature
                 prot.AddToBackpack(new StatCapScroll(225 + level));
             }
         }
+
+        for (var i = 0; i < TomePageCount; ++i)
+        {
+            BaseChampion.GiveTomePageTo(toGive[i % toGive.Count], TomePage.CreateRandom(true));
+        }
     }
 
     public override bool OnBeforeDeath()
@@ -320,7 +327,7 @@ public partial class Harrower : BaseCreature
 
             if (!NoKillAwards)
             {
-                GivePowerScrolls();
+                GiveRewardScrolls();
 
                 var map = Map;
 

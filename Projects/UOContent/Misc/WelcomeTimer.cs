@@ -30,7 +30,7 @@ namespace Server.Misc
                     "One of each level of treasure map has been placed in your bank box.",
                     "You will find 9000 silver pieces deposited into your bank box. Spend it as you see fit and enjoy yourself!",
                     "You will find 9000 gold pieces deposited into your bank box. Spend it as you see fit and enjoy yourself!",
-                    "A bag of PowerScrolls has been placed in your bank box."
+                    "A stat cap scroll has been placed in your bank box."
                 }
                 : new[]
                 {

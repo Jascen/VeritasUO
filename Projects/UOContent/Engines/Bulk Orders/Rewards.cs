@@ -203,7 +203,7 @@ namespace Server.Engines.BulkOrders
         private static readonly ConstructCallback ProspectorsTool = CreateProspectorsTool;
         private static readonly ConstructCallback PowderOfTemperament = CreatePowderOfTemperament;
         private static readonly ConstructCallback RunicHammer = CreateRunicHammer;
-        private static readonly ConstructCallback PowerScroll = CreatePowerScroll;
+        private static readonly ConstructCallback TomePage = CreateTomePage;
         private static readonly ConstructCallback ColoredAnvil = CreateColoredAnvil;
         private static readonly ConstructCallback AncientHammer = CreateAncientHammer;
         public static readonly SmithRewardCalculator Instance = new();
@@ -381,21 +381,21 @@ namespace Server.Engines.BulkOrders
                 new RewardGroup(
                     625,
                     new RewardItem(3, RunicHammer, 2),
-                    new RewardItem(6, PowerScroll, 5),
+                    new RewardItem(6, TomePage, 5),
                     new RewardItem(1, ColoredAnvil)
                 ),
                 new RewardGroup(650, new RewardItem(1, RunicHammer, 3)),
                 new RewardGroup(
                     675,
                     new RewardItem(1, ColoredAnvil),
-                    new RewardItem(6, PowerScroll, 10),
+                    new RewardItem(6, TomePage, 10),
                     new RewardItem(3, RunicHammer, 3)
                 ),
                 new RewardGroup(700, new RewardItem(1, RunicHammer, 4)),
                 new RewardGroup(750, new RewardItem(1, AncientHammer, 10)),
-                new RewardGroup(800, new RewardItem(1, PowerScroll, 15)),
+                new RewardGroup(800, new RewardItem(1, TomePage, 15)),
                 new RewardGroup(850, new RewardItem(1, AncientHammer, 15)),
-                new RewardGroup(900, new RewardItem(1, PowerScroll, 20)),
+                new RewardGroup(900, new RewardItem(1, TomePage, 20)),
                 new RewardGroup(950, new RewardItem(1, RunicHammer, 5)),
                 new RewardGroup(1000, new RewardItem(1, AncientHammer, 30)),
                 new RewardGroup(1050, new RewardItem(1, RunicHammer, 6)),
@@ -531,15 +531,15 @@ namespace Server.Engines.BulkOrders
             throw new InvalidOperationException();
         }
 
-        private static Item CreatePowerScroll(int type)
+        // BOD reward levels 5/10/15/20 map to common/uncommon/rare/ultra rare pages.
+        private static Item CreateTomePage(int type) => type switch
         {
-            if (type is 5 or 10 or 15 or 20)
-            {
-                return new PowerScroll(SkillName.Blacksmith, 100 + type);
-            }
-
-            throw new InvalidOperationException();
-        }
+            5  => Items.TomePage.Create(SkillName.Blacksmith, PageRarity.Common),
+            10 => Items.TomePage.Create(SkillName.Blacksmith, PageRarity.Uncommon),
+            15 => Items.TomePage.Create(SkillName.Blacksmith, PageRarity.Rare),
+            20 => Items.TomePage.Create(SkillName.Blacksmith, PageRarity.UltraRare),
+            _  => throw new InvalidOperationException()
+        };
 
         private static Item CreateColoredAnvil(int type) => new ColoredAnvil();
 
@@ -561,7 +561,7 @@ namespace Server.Engines.BulkOrders
         private static readonly ConstructCallback StretchedHide = CreateStretchedHide;
         private static readonly ConstructCallback RunicKit = CreateRunicKit;
         private static readonly ConstructCallback Tapestry = CreateTapestry;
-        private static readonly ConstructCallback PowerScroll = CreatePowerScroll;
+        private static readonly ConstructCallback TomePage = CreateTomePage;
         private static readonly ConstructCallback BearRug = CreateBearRug;
         private static readonly ConstructCallback ClothingBlessDeed = CreateCBD;
         public static readonly TailorRewardCalculator Instance = new();
@@ -697,13 +697,13 @@ namespace Server.Engines.BulkOrders
                 new RewardGroup(200, new RewardItem(4, Cloth, 4), new RewardItem(1, Sandals)),
                 new RewardGroup(300, new RewardItem(1, StretchedHide)),
                 new RewardGroup(350, new RewardItem(1, RunicKit, 1)),
-                new RewardGroup(400, new RewardItem(2, PowerScroll, 5), new RewardItem(3, Tapestry)),
+                new RewardGroup(400, new RewardItem(2, TomePage, 5), new RewardItem(3, Tapestry)),
                 new RewardGroup(450, new RewardItem(1, BearRug)),
-                new RewardGroup(500, new RewardItem(1, PowerScroll, 10)),
+                new RewardGroup(500, new RewardItem(1, TomePage, 10)),
                 new RewardGroup(550, new RewardItem(1, ClothingBlessDeed)),
-                new RewardGroup(575, new RewardItem(1, PowerScroll, 15)),
+                new RewardGroup(575, new RewardItem(1, TomePage, 15)),
                 new RewardGroup(600, new RewardItem(1, RunicKit, 2)),
-                new RewardGroup(650, new RewardItem(1, PowerScroll, 20)),
+                new RewardGroup(650, new RewardItem(1, TomePage, 20)),
                 new RewardGroup(700, new RewardItem(1, RunicKit, 3))
             };
         }
@@ -846,15 +846,15 @@ namespace Server.Engines.BulkOrders
             throw new InvalidOperationException();
         }
 
-        private static Item CreatePowerScroll(int type)
+        // BOD reward levels 5/10/15/20 map to common/uncommon/rare/ultra rare pages.
+        private static Item CreateTomePage(int type) => type switch
         {
-            if (type is 5 or 10 or 15 or 20)
-            {
-                return new PowerScroll(SkillName.Tailoring, 100 + type);
-            }
-
-            throw new InvalidOperationException();
-        }
+            5  => Items.TomePage.Create(SkillName.Tailoring, PageRarity.Common),
+            10 => Items.TomePage.Create(SkillName.Tailoring, PageRarity.Uncommon),
+            15 => Items.TomePage.Create(SkillName.Tailoring, PageRarity.Rare),
+            20 => Items.TomePage.Create(SkillName.Tailoring, PageRarity.UltraRare),
+            _  => throw new InvalidOperationException()
+        };
 
         private static Item CreateCBD(int type) => new ClothingBlessDeed();
     }

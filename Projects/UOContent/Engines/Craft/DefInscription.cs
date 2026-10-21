@@ -430,6 +430,9 @@ public class DefInscription : CraftSystem
             SetNeededExpansion(index, Expansion.ML);
         }
 
+        index = AddCraft(typeof(SkillTome), 1044294, "blank tome", 70.0, 100.0, typeof(BlankScroll), 1044377, 25, 1044378);
+        AddRes(index, typeof(Leather), 1044462, 5, 1044463);
+
         // Runebook
         index = AddCraft(typeof(Runebook), 1044294, 1041267, 45.0, 95.0, typeof(BlankScroll), 1044377, 8, 1044378);
         AddRes(index, typeof(RecallScroll), 1044445, 1, 1044253);
