@@ -5,16 +5,15 @@ namespace Server.Mobiles;
 
 public partial class OmniAI
 {
-    public void ChivalryPower()
+    public Spell ChivalryPower()
     {
         if (Utility.Random(100) > 30)
         {
-            GetPaladinSpell()?.Cast();
+            return GetPaladinSpell();
         }
-        else
-        {
-            UseWeaponStrike();
-        }
+
+        UseWeaponStrike();
+        return null;
     }
 
     public Spell GetPaladinSpell()

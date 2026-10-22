@@ -18,7 +18,7 @@ public class MageAI : BaseAI
     private const double HealChance = 0.10;     // 10% chance to heal at gm magery
     private const double TeleportChance = 0.05; // 5% chance to teleport at gm magery
     private const double DispelChance = 0.75;   // 75% chance to dispel at gm magery
-    private const double InvisChance = 0.50; // 50% chance to invis at gm magery
+    protected const double InvisChance = 0.50; // 50% chance to invis at gm magery
 
     public override double FleeHealthThreshold => 0.2; // 20% is default
     public override double FleeChance => 0.1; // 10% is default
@@ -66,6 +66,11 @@ public class MageAI : BaseAI
     }
 
     public virtual bool SmartAI => Mobile is BaseVendor or BaseEscortable or Changeling;
+
+    /// <summary>
+    ///     Whether this AI casts Reveal at the spot where its last combatant hid.
+    /// </summary>
+    public virtual bool CanRevealHidden => true;
 
     public virtual bool IsNecromancer => Core.AOS && Mobile.Skills.Necromancy.Value > 50;
 
@@ -116,7 +121,7 @@ public class MageAI : BaseAI
         return true;
     }
 
-    private Spell CheckCastHealingSpell()
+    protected virtual Spell CheckCastHealingSpell()
     {
         // If I'm poisoned, always attempt to cure.
         if (Mobile.Poisoned)
@@ -208,7 +213,7 @@ public class MageAI : BaseAI
         Run((Mobile.GetDirectionTo(m) - 4) & Direction.Mask);
     }
 
-    public void OnFailedMove()
+    public virtual void OnFailedMove()
     {
         if (!Mobile.DisallowAllMoves && (SmartAI
                 ? Utility.Random(4) == 0
@@ -487,33 +492,7 @@ public class MageAI : BaseAI
                         }
                     default: // Set up a combo
                         {
-                            if (Mobile.Mana is > 15 and < 40)
-                            {
-                                if (c.Paralyzed && !c.Poisoned && !Mobile.Meditating)
-                                {
-                                    DebugSay("I am going to meditate");
-
-                                    Mobile.UseSkill(SkillName.Meditation);
-                                }
-                                else if (!c.Poisoned)
-                                {
-                                    spell = new ParalyzeSpell(Mobile);
-                                }
-                            }
-                            else if (Mobile.Mana > 60)
-                            {
-                                if (Utility.RandomBool() && !c.Paralyzed && !c.Frozen && !c.Poisoned)
-                                {
-                                    _combo = 0;
-                                    spell = new ParalyzeSpell(Mobile);
-                                }
-                                else
-                                {
-                                    _combo = 1;
-                                    spell = new ExplosionSpell(Mobile);
-                                }
-                            }
-
+                            spell = SetUpCombo(c);
                             break;
                         }
                 }
@@ -530,6 +509,39 @@ public class MageAI : BaseAI
         }
 
         return spell;
+    }
+
+    /// <summary>
+    ///     Opens a <see cref="DoCombo"/> chain when mana allows, or lays the Paralyze groundwork for one.
+    /// </summary>
+    protected Spell SetUpCombo(Mobile c)
+    {
+        if (Mobile.Mana is > 15 and < 40)
+        {
+            if (c.Paralyzed && !c.Poisoned && !Mobile.Meditating)
+            {
+                DebugSay("I am going to meditate");
+
+                Mobile.UseSkill(SkillName.Meditation);
+            }
+            else if (!c.Poisoned)
+            {
+                return new ParalyzeSpell(Mobile);
+            }
+        }
+        else if (Mobile.Mana > 60)
+        {
+            if (Utility.RandomBool() && !c.Paralyzed && !c.Frozen && !c.Poisoned)
+            {
+                _combo = 0;
+                return new ParalyzeSpell(Mobile);
+            }
+
+            _combo = 1;
+            return new ExplosionSpell(Mobile);
+        }
+
+        return null;
     }
 
     public virtual Spell DoCombo(Mobile c)
@@ -608,7 +620,7 @@ public class MageAI : BaseAI
         return spell;
     }
 
-    private TimeSpan GetDelay(Spell spell)
+    protected virtual TimeSpan GetDelay(Spell spell)
     {
         if (SmartAI || spell is DispelSpell)
         {
@@ -620,6 +632,40 @@ public class MageAI : BaseAI
         var max = 6.0 - del * 1.25;
 
         return TimeSpan.FromSeconds(min + (max - min) * Utility.RandomDouble());
+    }
+
+    /// <summary>
+    ///     Picks the spell for a combat cast tick. A null result still consumes the tick.
+    /// </summary>
+    protected virtual Spell SelectCombatSpell(Mobile c, Mobile toDispel)
+    {
+        Spell spell;
+
+        if (Mobile.Poisoned) // Top cast priority is cure
+        {
+            DebugSay("I am going to cure myself");
+
+            spell = new CureSpell(Mobile);
+        }
+        else if (toDispel != null) // Something dispellable is attacking us
+        {
+            this.DebugSayFormatted($"I am going to dispel {toDispel}");
+
+            spell = DoDispel(toDispel); // May return null if dumb AI and doesn't have enough skill
+        }
+        else
+        {
+            spell = null;
+        }
+
+        return spell ?? SmartAI switch
+        {
+            // We are doing a spell combo
+            true when _combo != -1 => DoCombo(c),
+            // They have a heal spell out
+            true when !c.Poisoned && c.Spell is HealSpell or GreaterHealSpell => new PoisonSpell(Mobile),
+            _ => ChooseSpell(c)
+        };
     }
 
     public override bool DoActionCombat()
@@ -727,34 +773,8 @@ public class MageAI : BaseAI
             }
 
             // We are ready to cast a spell
-            Spell spell;
             var toDispel = FindDispelTarget(true);
-
-            if (Mobile.Poisoned) // Top cast priority is cure
-            {
-                DebugSay("I am going to cure myself");
-
-                spell = new CureSpell(Mobile);
-            }
-            else if (toDispel != null) // Something dispellable is attacking us
-            {
-                this.DebugSayFormatted($"I am going to dispel {toDispel}");
-
-                spell = DoDispel(toDispel); // May return null if dumb AI and doesn't have enough skill
-            }
-            else
-            {
-                spell = null;
-            }
-
-            spell ??= SmartAI switch
-            {
-                // We are doing a spell combo
-                true when _combo != -1 => DoCombo(c),
-                // They have a heal spell out
-                true when !c.Poisoned && c.Spell is HealSpell or GreaterHealSpell => new PoisonSpell(Mobile),
-                _ => ChooseSpell(c)
-            };
+            var spell = SelectCombatSpell(c, toDispel);
 
             // Now we have a spell picked
             var range = (spell as IRangedSpell)?.TargetRange ?? Mobile.RangePerception;
@@ -800,7 +820,7 @@ public class MageAI : BaseAI
 
     public override bool DoActionGuard()
     {
-        if (_lastTarget?.Hidden == true)
+        if (CanRevealHidden && _lastTarget?.Hidden == true)
         {
             var map = Mobile.Map;
 
@@ -969,7 +989,7 @@ public class MageAI : BaseAI
         m is BaseCreature creature && creature.Summoned && creature.SummonMaster != Mobile &&
         Mobile.CanBeHarmful(creature, false) && !creature.IsAnimatedDead;
 
-    private bool ProcessTarget()
+    protected virtual bool ProcessTarget()
     {
         var targ = Mobile.Target;
 

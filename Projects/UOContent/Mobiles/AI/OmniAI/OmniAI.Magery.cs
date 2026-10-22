@@ -1,3 +1,4 @@
+using System;
 using Server.Spells;
 using Server.Spells.Eighth;
 using Server.Spells.Fifth;
@@ -27,24 +28,42 @@ public partial class OmniAI
 
     public virtual bool CanUseMagerySummon => true;
 
-    public void MageryPower()
-    {
-        var spell = GetMagerySpell();
+    private const double ComboChance = 0.25;
+    private const double InvisRollChance = 0.25;
 
-        if (spell == null)
+    /// <summary>
+    ///     The Magery school's pick: open a MageAI combo, slip into invisibility when hurt, or
+    ///     fall through to the reflect- and mana-aware <see cref="GetMagerySpell"/>.
+    /// </summary>
+    public override Spell ChooseSpell(Mobile c)
+    {
+        if (Mobile.Mana > 60 && Utility.RandomDouble() < ComboChance && SetUpCombo(c) is { } opener)
         {
-            return;
+            DebugSay("Starting a combo");
+            return opener;
+        }
+
+        if (!Mobile.Hidden && Mobile.Hits < Mobile.HitsMax / 2 && Utility.RandomDouble() < InvisRollChance &&
+            ScaleBySkill(InvisChance, SkillName.Magery) > Utility.RandomDouble())
+        {
+            DebugSay("Attempting to invis myself");
+            return new InvisibilitySpell(Mobile);
+        }
+
+        return GetMagerySpell();
+    }
+
+    // Non-Magery picks (and turns spent on a skill or special move) wait the flat school interval.
+    protected override TimeSpan GetDelay(Spell spell)
+    {
+        if (spell is not MagerySpell)
+        {
+            return TimeSpan.FromMilliseconds(CastIntervalMs);
         }
 
         var delay = spell.GetCastDelay() + spell.GetCastRecovery();
 
-        if (!IsEmpowered)
-        {
-            delay += delay;
-        }
-
-        _nextCastTime = Core.TickCount + (long)delay.TotalMilliseconds;
-        spell.Cast();
+        return IsEmpowered ? delay : delay + delay;
     }
 
     public Spell GetMagerySpell()

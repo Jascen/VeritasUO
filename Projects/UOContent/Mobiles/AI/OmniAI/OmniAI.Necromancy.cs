@@ -13,11 +13,6 @@ public partial class OmniAI
 
     public virtual bool CanShapeShift => true;
 
-    public void NecromancerPower()
-    {
-        GetNecromancerSpell()?.Cast();
-    }
-
     public Spell GetNecromancerSpell()
     {
         var necro = Mobile.Skills.Necromancy.Value;
