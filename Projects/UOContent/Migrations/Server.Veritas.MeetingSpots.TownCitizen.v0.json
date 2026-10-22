@@ -1,0 +1,11 @@
+{
+  "version": 0,
+  "type": "Server.Veritas.MeetingSpots.TownCitizen",
+  "properties": [
+    {
+      "name": "Spot",
+      "type": "Server.Veritas.MeetingSpots.MeetingSpot",
+      "rule": "SerializableInterfaceMigrationRule"
+    }
+  ]
+}
