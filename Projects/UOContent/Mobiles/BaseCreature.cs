@@ -2695,6 +2695,7 @@ namespace Server.Mobiles
                     //TODO Implement PredatorAI
                     new MeleeAI(this),
                 AIType.AI_Thief => new ThiefAI(this),
+                AIType.AI_Omni  => new OmniAI(this),
                 _               => null
             };
         }
