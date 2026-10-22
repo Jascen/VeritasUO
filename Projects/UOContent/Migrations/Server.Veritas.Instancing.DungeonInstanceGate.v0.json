@@ -1,0 +1,14 @@
+{
+  "version": 0,
+  "type": "Server.Veritas.Instancing.DungeonInstanceGate",
+  "properties": [
+    {
+      "name": "Dungeon",
+      "type": "string",
+      "rule": "PrimitiveTypeMigrationRule",
+      "ruleArguments": [
+        ""
+      ]
+    }
+  ]
+}
