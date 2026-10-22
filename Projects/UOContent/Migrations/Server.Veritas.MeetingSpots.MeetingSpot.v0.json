@@ -1,0 +1,24 @@
+{
+  "version": 0,
+  "type": "Server.Veritas.MeetingSpots.MeetingSpot",
+  "properties": [
+    {
+      "name": "Group",
+      "type": "System.Collections.Generic.List\u003CServer.Veritas.MeetingSpots.TownCitizen\u003E",
+      "rule": "ListMigrationRule",
+      "ruleArguments": [
+        "@Tidy",
+        "Server.Veritas.MeetingSpots.TownCitizen",
+        "SerializableInterfaceMigrationRule"
+      ]
+    },
+    {
+      "name": "Roomy",
+      "type": "bool",
+      "rule": "PrimitiveTypeMigrationRule",
+      "ruleArguments": [
+        ""
+      ]
+    }
+  ]
+}
