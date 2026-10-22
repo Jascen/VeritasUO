@@ -438,8 +438,6 @@ public partial class ChampionSpawn : Item
         return ScrollofTranscendence.CreateRandom(min, max);
     }
 
-    private static PowerScroll CreateRandomPS() => PowerScroll.CreateRandomNoCraft(5, 5);
-
     public static void GiveScrollTo(Mobile killer, SpecialScroll scroll, bool isFelucca = true)
     {
         if (scroll == null || killer == null) // sanity
@@ -641,7 +639,7 @@ public partial class ChampionSpawn : Item
             }
             else
             {
-                GiveScrollTo(pm, CreateRandomPS());
+                BaseChampion.GiveTomePageTo(pm, TomePage.CreateRandom());
             }
         }
 

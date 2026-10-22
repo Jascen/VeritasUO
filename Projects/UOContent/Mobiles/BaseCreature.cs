@@ -3393,6 +3393,8 @@ namespace Server.Mobiles
                     }
                 }
 
+                TomePageDrops.TryPack(this);
+
                 if (_isParagon && Paragon.ChocolateIngredientChance > Utility.RandomDouble())
                 {
                     switch (Utility.Random(4))
