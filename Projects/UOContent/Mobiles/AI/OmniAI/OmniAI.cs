@@ -1,25 +1,27 @@
 using System;
-using Server.Engines.PartySystem;
-using Server.Guilds;
 using Server.Items;
 using Server.Multis;
 using Server.SkillHandlers;
 using Server.Spells;
+using Server.Spells.Chivalry;
 using Server.Spells.Eighth;
 using Server.Spells.Fifth;
-using Server.Spells.Sixth;
+using Server.Spells.First;
+using Server.Spells.Fourth;
+using Server.Spells.Second;
 using Server.Spells.Third;
 using Server.Targeting;
 
 namespace Server.Mobiles;
 
 /// <summary>
-///     Multi-school creature AI, ported from Peoharen's OmniAI as shipped in Ultima Memento.
-///     Every cast tick it rolls among the schools the creature is trained in (Bard, Bushido,
-///     Chivalry, Magery, Necromancy, Ninjitsu), and layers kiting, field dodging, teleport
-///     escapes and self-healing over the stock movement.
+///     Multi-school creature AI, ported from Peoharen's OmniAI as shipped in Ultima Memento and
+///     built on <see cref="MageAI"/>'s combat loop. Each cast tick cures, heals, dispels, finishes
+///     a running MageAI combo or poisons a healing foe first; otherwise it rolls among the schools
+///     the creature is trained in (Bard, Bushido, Chivalry, Magery, Necromancy, Ninjitsu). Kiting,
+///     field dodging, teleport escapes and weapon swapping layer over the stock movement.
 /// </summary>
-public partial class OmniAI : BaseAI
+public partial class OmniAI : MageAI
 {
     private const double SchoolSkillThreshold = 10.0;
     private const int CastIntervalMs = 4000;
@@ -43,7 +45,6 @@ public partial class OmniAI : BaseAI
 
     private int _teleportAttempts;
     private long _nextTeleportTime;
-    private long _nextCastTime;
     private long _nextHealTime;
     private long _nextFieldCheck;
     private long _nextArmedCheck;
@@ -52,7 +53,6 @@ public partial class OmniAI : BaseAI
     {
         var now = Core.TickCount;
         _nextTeleportTime = now;
-        _nextCastTime = now;
         _nextHealTime = now;
         _nextFieldCheck = now;
         _nextArmedCheck = now;
@@ -95,6 +95,8 @@ public partial class OmniAI : BaseAI
         }
     }
 
+    public override bool CanRevealHidden => CanUseMagery;
+
     public override double FleeHealthThreshold => 0.2;
 
     // 10% base, plus one point per hit point the combatant has over us.
@@ -129,112 +131,87 @@ public partial class OmniAI : BaseAI
 
         RefreshStealth();
 
-        return ProcessTarget() || base.Think();
+        return base.Think();
     }
 
     public override bool DoActionWander()
     {
         TryHide();
 
-        if (AcquireFocusMob(Mobile.RangePerception, Mobile.FightMode, false, false, true))
-        {
-            this.DebugSayFormatted($"I have detected {Mobile.FocusMob.Name}, attacking");
-
-            Mobile.Combatant = Mobile.FocusMob;
-            Action = ActionType.Combat;
-        }
-        else if (Mobile.Mana < Mobile.ManaMax && Mobile.Skills.Meditation.Value > 60.0 && !Mobile.Meditating)
+        if (Mobile.Mana < Mobile.ManaMax && Mobile.Skills.Meditation.Value > 60.0 && !Mobile.Meditating &&
+            !AcquireFocusMob(Mobile.RangePerception, Mobile.FightMode, false, false, true))
         {
             DebugSay("I am going to meditate");
 
             Mobile.UseSkill(SkillName.Meditation);
+            return true;
         }
-        else
+
+        base.DoActionWander();
+
+        if (Action == ActionType.Wander)
         {
-            Mobile.Warmode = false;
-            base.DoActionWander();
             TryToHeal();
         }
 
         return true;
     }
 
-    public override bool DoActionCombat()
+    // MageAI's cast tick runs this; turns spent on a heal or a non-spell school return null.
+    protected override Spell SelectCombatSpell(Mobile c, Mobile toDispel)
     {
-        var c = Mobile.Combatant;
-        Mobile.Warmode = true;
-
-        if (c?.Deleted != false || c.Map != Mobile.Map || !c.Alive || c.IsDeadBondedPet)
+        if (Mobile.Poisoned)
         {
-            DebugSay("My combatant is gone, so my guard is up");
-
-            Action = ActionType.Guard;
-            return true;
-        }
-
-        if (!Mobile.InRange(c, Mobile.RangePerception))
-        {
-            if (AcquireFocusMob(Mobile.RangePerception, Mobile.FightMode, false, false, true))
+            if (CanUseMagery)
             {
-                Mobile.Combatant = Mobile.FocusMob;
-                Mobile.FocusMob = null;
-            }
-            else if (!Mobile.InRange(c, Mobile.ChaseLeashRange))
-            {
-                Mobile.Combatant = null;
+                DebugSay("I am going to cure myself");
+                return new CureSpell(Mobile);
             }
 
-            c = Mobile.Combatant;
-
-            if (c == null)
+            if (CanUseChivalry)
             {
-                DebugSay("My combatant has fled, so I am on guard");
-
-                Action = ActionType.Guard;
-                return true;
+                DebugSay("I am going to cleanse myself");
+                return new CleanseByFireSpell(Mobile);
             }
-        }
-
-        if (MoveTo(c, Mobile.RangeFight))
-        {
-            if (Core.TickCount - Mobile.LastMoveTime > 400)
-            {
-                Mobile.Direction = Mobile.GetDirectionTo(c);
-            }
-        }
-        else if (OnFailedMove())
-        {
-            return true;
-        }
-        else if (Mobile.GetDistanceToSqrt(c) > Mobile.RangePerception + 1)
-        {
-            this.DebugSayFormatted($"I cannot find {c.Name}, so my guard is up");
-
-            Action = ActionType.Guard;
-            return true;
-        }
-
-        if (Mobile.TriggerAbility(MonsterAbilityTrigger.CombatAction, c))
-        {
-            DebugSay("I used my abilities!");
-            return true;
         }
 
         if (TryToHeal())
         {
-            return true;
+            return null;
         }
 
-        if (Mobile.Spell == null && Core.TickCount - _nextCastTime >= 0 && Mobile.InRange(c, 12))
+        if (CanUseMagery)
         {
-            _nextCastTime = Core.TickCount + CastIntervalMs;
-            UseRandomSchool();
+            if (toDispel != null && DoDispel(toDispel) is { } dispel)
+            {
+                this.DebugSayFormatted($"I am going to dispel {toDispel}");
+                return dispel;
+            }
+
+            // A half-finished combo is wasted mana, so it outranks the school roll.
+            if (_combo != -1)
+            {
+                return DoCombo(c);
+            }
+
+            if (!c.Poisoned && c.Spell is HealSpell or GreaterHealSpell)
+            {
+                DebugSay("My opponent is healing, so I am going to poison them");
+                return new PoisonSpell(Mobile);
+            }
         }
 
-        return true;
+        return UseRandomSchool(c);
     }
 
-    private void UseRandomSchool()
+    // MageAI's heal-check call sites (wander, guard) route through the school-aware heal.
+    protected override Spell CheckCastHealingSpell()
+    {
+        TryToHeal();
+        return null;
+    }
+
+    private Spell UseRandomSchool(Mobile c)
     {
         Span<int> schools = stackalloc int[6];
         var count = 0;
@@ -271,7 +248,7 @@ public partial class OmniAI : BaseAI
 
         if (count == 0)
         {
-            return;
+            return null;
         }
 
         switch (schools[Utility.Random(count)])
@@ -279,32 +256,29 @@ public partial class OmniAI : BaseAI
             case 0:
                 {
                     BardPower();
-                    break;
+                    return null;
                 }
             case 1:
                 {
                     BushidoPower();
-                    break;
+                    return null;
                 }
             case 2:
                 {
-                    ChivalryPower();
-                    break;
+                    return ChivalryPower();
                 }
             case 3:
                 {
-                    MageryPower();
-                    break;
+                    return ChooseSpell(c);
                 }
             case 4:
                 {
-                    NecromancerPower();
-                    break;
+                    return GetNecromancerSpell();
                 }
-            case 5:
+            default:
                 {
                     NinjitsuPower();
-                    break;
+                    return null;
                 }
         }
     }
@@ -312,20 +286,7 @@ public partial class OmniAI : BaseAI
     public override bool DoActionGuard()
     {
         TryHide();
-
-        if (AcquireFocusMob(Mobile.RangePerception, Mobile.FightMode, false, false, true))
-        {
-            this.DebugSayFormatted($"I have detected {Mobile.FocusMob.Name}, attacking");
-
-            Mobile.Combatant = Mobile.FocusMob;
-            Action = ActionType.Combat;
-        }
-        else
-        {
-            base.DoActionGuard();
-        }
-
-        return true;
+        return base.DoActionGuard();
     }
 
     public override bool DoActionFlee()
@@ -355,7 +316,7 @@ public partial class OmniAI : BaseAI
         return base.DoActionFlee();
     }
 
-    private bool OnFailedMove()
+    public override void OnFailedMove()
     {
         var canOnlySwim = Mobile.CanSwim && Mobile.CantWalk;
 
@@ -366,8 +327,7 @@ public partial class OmniAI : BaseAI
 
             Mobile.Target?.Cancel(Mobile, TargetCancelType.Canceled);
             new TeleportSpell(Mobile).Cast();
-
-            return true;
+            return;
         }
 
         if (AcquireFocusMob(Mobile.RangePerception, Mobile.FightMode, false, false, true))
@@ -376,12 +336,10 @@ public partial class OmniAI : BaseAI
 
             Mobile.Combatant = Mobile.FocusMob;
             Action = ActionType.Combat;
-
-            return true;
+            return;
         }
 
         DebugSay("I am stuck");
-        return false;
     }
 
     public override bool MoveTo(Mobile m, int range)
@@ -437,7 +395,8 @@ public partial class OmniAI : BaseAI
         _nextTeleportTime = Core.TickCount + TeleportCooldownMs;
     }
 
-    private bool ProcessTarget()
+    // Summon placement and teleport landing are handled here; every other target goes to MageAI.
+    protected override bool ProcessTarget()
     {
         var targ = Mobile.Target;
 
@@ -464,64 +423,13 @@ public partial class OmniAI : BaseAI
             return true;
         }
 
-        if (spell is DispelSpell)
-        {
-            if (!Mobile.AutoDispel && FindDispelTarget() is { } dispelTarget)
-            {
-                targ.Invoke(Mobile, dispelTarget);
-            }
-            else
-            {
-                targ.Cancel(Mobile, TargetCancelType.Canceled);
-            }
-
-            return true;
-        }
-
         if (spell is TeleportSpell)
         {
             ProcessTeleportTarget(targ, toTarget);
             return true;
         }
 
-        if ((targ.Flags & TargetFlags.Harmful) != 0 && toTarget != null)
-        {
-            if ((targ.Range == -1 || Mobile.InRange(toTarget, targ.Range)) && Mobile.CanSee(toTarget) &&
-                Mobile.InLOS(toTarget))
-            {
-                targ.Invoke(Mobile, toTarget);
-                return true;
-            }
-        }
-        else if ((targ.Flags & TargetFlags.Beneficial) != 0)
-        {
-            targ.Invoke(Mobile, Mobile);
-            return true;
-        }
-        else
-        {
-            targ.Cancel(Mobile, TargetCancelType.Canceled);
-        }
-
-        return false;
-    }
-
-    private Mobile FindDispelTarget()
-    {
-        Mobile found = null;
-        var seen = 0;
-
-        // Reservoir pick: uniform over every dispellable enemy summon without building a list.
-        foreach (var m in Mobile.GetMobilesInRange(12))
-        {
-            if (m is BaseCreature { IsDispellable: true } bc && bc.SummonMaster != Mobile &&
-                CanTarget(Mobile, bc) && Utility.Random(++seen) == 0)
-            {
-                found = bc;
-            }
-        }
-
-        return found;
+        return base.ProcessTarget();
     }
 
     private void ProcessTeleportTarget(Target targ, Mobile toTarget)
@@ -631,100 +539,5 @@ public partial class OmniAI : BaseAI
         }
 
         return false;
-    }
-
-    public static bool CanTarget(Mobile from, Mobile to) => CanTarget(from, to, true, false, false);
-
-    public static bool CanTarget(Mobile from, Mobile to, bool harm) => CanTarget(from, to, harm, false, false);
-
-    public static bool CanTarget(Mobile from, Mobile to, bool harm, bool checkGuildParty, bool allowNull)
-    {
-        if (to == null)
-        {
-            return false;
-        }
-
-        if (from == null)
-        {
-            return allowNull;
-        }
-
-        if (from == to && !harm)
-        {
-            return true;
-        }
-
-        if (harm && to.Blessed || to.AccessLevel != AccessLevel.Player && to.Hidden)
-        {
-            return false;
-        }
-
-        if (checkGuildParty)
-        {
-            var fromGuild = GetGuild(from);
-            var toGuild = GetGuild(to);
-
-            if (fromGuild != null && toGuild != null && (fromGuild == toGuild || fromGuild.IsAlly(toGuild)))
-            {
-                return !harm;
-            }
-
-            if (GetParty(from)?.Contains(to) == true)
-            {
-                return !harm;
-            }
-        }
-
-        return harm ? IsGoodGuy(from) != IsGoodGuy(to) : IsGoodGuy(from) == IsGoodGuy(to);
-    }
-
-    public static bool IsGoodGuy(Mobile m)
-    {
-        if (m.Criminal)
-        {
-            return false;
-        }
-
-        if (m.Player && m.Kills < 5)
-        {
-            return true;
-        }
-
-        if (m is BaseCreature { Controlled: true } or BaseCreature { Summoned: true })
-        {
-            var bc = (BaseCreature)m;
-            var master = bc.ControlMaster ?? bc.SummonMaster;
-
-            return master != null && IsGoodGuy(master);
-        }
-
-        return false;
-    }
-
-    public static Guild GetGuild(Mobile m)
-    {
-        if (m.Guild is Guild guild)
-        {
-            return guild;
-        }
-
-        if (m is BaseCreature bc)
-        {
-            return bc.ControlMaster?.Guild as Guild ?? bc.SummonMaster?.Guild as Guild;
-        }
-
-        return null;
-    }
-
-    public static Party GetParty(Mobile m)
-    {
-        var party = Party.Get(m);
-
-        if (party == null && m is BaseCreature bc)
-        {
-            party = Party.Get(bc.ControlMaster) ?? Party.Get(bc.SummonMaster);
-        }
-
-        return party;
     }
 }
